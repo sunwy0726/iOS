@@ -40,6 +40,7 @@ end
 
 def shared_fwk_pods
   pod 'Sodium', git: 'https://github.com/jedisct1/swift-sodium.git', branch: 'master'
+  pod 'HAWebSocket', path: 'Sources/Libraries/WebSocket', testspecs: ['Tests']
 end
 
 abstract_target 'iOS' do

@@ -11,6 +11,10 @@ PODS:
   - EMTLoadingIndicator (4.0.0)
   - Eureka (5.3.2)
   - Firebase (7.4.0)
+  - HAWebSocket (0.1.0):
+    - Starscream (~> 4.0.4)
+  - HAWebSocket/Tests (0.1.0):
+    - Starscream (~> 4.0.4)
   - KeychainAccess (4.2.1)
   - Lokalise (0.10.2)
   - lottie-ios (3.1.9)
@@ -48,6 +52,7 @@ PODS:
   - Sentry/Core (6.1.0)
   - SimulatorStatusMagic (2.4.1)
   - Sodium (0.9.1)
+  - Starscream (4.0.4)
   - SwiftFormat/CLI (0.47.11)
   - SwiftGen (6.4.0)
   - SwiftLint (0.42.0)
@@ -73,6 +78,8 @@ DEPENDENCIES:
   - EMTLoadingIndicator (from `https://github.com/hirokimu/EMTLoadingIndicator`, branch `master`)
   - Eureka
   - Firebase (from `Configuration/Podspecs/Firebase.podspec.json`)
+  - HAWebSocket (from `Sources/Libraries/WebSocket`)
+  - HAWebSocket/Tests (from `Sources/Libraries/WebSocket`)
   - KeychainAccess
   - Lokalise (~> 0.10.0)
   - lottie-ios
@@ -111,6 +118,7 @@ SPEC REPOS:
     - ReachabilitySwift
     - Sentry
     - SimulatorStatusMagic
+    - Starscream
     - SwiftFormat
     - SwiftGen
     - SwiftLint
@@ -132,6 +140,8 @@ EXTERNAL SOURCES:
     :git: https://github.com/hirokimu/EMTLoadingIndicator
   Firebase:
     :podspec: Configuration/Podspecs/Firebase.podspec.json
+  HAWebSocket:
+    :path: Sources/Libraries/WebSocket
   ObjectMapper:
     :branch: master
     :git: https://github.com/tristanhimmelman/ObjectMapper.git
@@ -173,6 +183,7 @@ SPEC CHECKSUMS:
   EMTLoadingIndicator: 0d3256b0de3e6ba5ab17048acc7aa93af34e48d3
   Eureka: 1c2b8b5892bfb0e972d0fe05f8c09fd89f8625ec
   Firebase: 0b898049b2691473053d5de73e9725b134556ad2
+  HAWebSocket: 4a5c329435a57eefdf2d06833abc4aeeace8669a
   KeychainAccess: 9b07f665298d13c3a85881bd3171f6f49b8151c1
   Lokalise: 252c397887dfd9983331abffa90ab60cdb004e19
   lottie-ios: 3a3758ef5a008e762faec9c9d50a39842f26d124
@@ -186,6 +197,7 @@ SPEC CHECKSUMS:
   Sentry: 367db11b23fc30944358dbd198fa35a96ad7f2a5
   SimulatorStatusMagic: 28d4a9d1a500ac7cea0b2b5a43c1c6ddb40ba56c
   Sodium: 23d11554ecd556196d313cf6130d406dfe7ac6da
+  Starscream: 5178aed56b316f13fa3bc55694e583d35dd414d9
   SwiftFormat: 6f2fd4689e09959ba5b690ab950279e33eb6441e
   SwiftGen: 67860cc7c3cfc2ed25b9b74cfd55495fc89f9108
   SwiftLint: 4fa9579c63416865179bc416f0a92d55f009600d
@@ -196,6 +208,6 @@ SPEC CHECKSUMS:
   XCGLogger: 1943831ef907df55108b0b18657953f868de973b
   ZIPFoundation: b1f0de4eed33e74a676f76e12559ab6b75990197
 
-PODFILE CHECKSUM: 886ee9e9156c28c493fe7ac11eec28e43231325d
+PODFILE CHECKSUM: afec002b559dec395c3d0f6d767042f91cb51d69
 
 COCOAPODS: 1.10.1
