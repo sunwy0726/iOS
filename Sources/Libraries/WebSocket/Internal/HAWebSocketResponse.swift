@@ -15,20 +15,24 @@ internal enum HAWebSocketResponse {
         case invalid
     }
 
-    case result(identifier: HAWebSocketRequestIdentifier, data: Result<HAWebSocketData, HAWebSocketError>)
-    case event(identifier: HAWebSocketRequestIdentifier, event: HAWebSocketEvent)
+    case result(identifier: HAWebSocketRequestIdentifier, result: Result<HAWebSocketData, HAWebSocketError>)
+    case event(identifier: HAWebSocketRequestIdentifier, data: HAWebSocketData)
     case auth(AuthState)
+
+    enum TempError: Error {
+        case parseError(String)
+    }
 
     init(dictionary: [String: Any]) throws {
         guard let type = dictionary["type"] as? String else {
-            throw HAWebSocketError.ResponseError.parseError(nil)
+            throw TempError.parseError("type is not valid")
         }
 
         func parseIdentifier() throws -> HAWebSocketRequestIdentifier {
             if let value = (dictionary["id"] as? Int).flatMap(HAWebSocketRequestIdentifier.init(rawValue:)) {
                 return value
             } else {
-                throw HAWebSocketError.ResponseError.parseError(nil)
+                throw TempError.parseError("id is not valid")
             }
         }
 
@@ -37,24 +41,24 @@ internal enum HAWebSocketResponse {
             let identifier = try parseIdentifier()
 
             if dictionary["success"] as? Bool == true {
-                self = .result(identifier: identifier, data: .success(.init(value: dictionary["result"])))
+                self = .result(identifier: identifier, result: .success(.init(value: dictionary["result"])))
             } else {
-                self = .result(identifier: identifier, data: .failure(.responseError(.response(error: {
-                    if let error = dictionary["error"] as? [String: Any],
-                       let code = error["code"] as? Int,
-                       let message = error["message"] as? String {
-                        return (code, message)
-                    } else {
-                        return nil
-                    }
-                }()))))
+                let externalError: HAWebSocketError.ExternalError
+
+                if let error = dictionary["error"] as? [String: Any],
+                   let code = error["code"] as? Int,
+                   let message = error["message"] as? String {
+                    externalError = .init(code: code, message: message)
+                } else {
+                    externalError = .init(code: -1, message: "unable to parse error response")
+                }
+
+                self = .result(identifier: identifier, result: .failure(.init(type: .external(externalError))))
             }
 
         case .event:
             let identifier = try parseIdentifier()
-
-            let event = try HAWebSocketEvent(dictionary: dictionary["event"] as? [String: Any] ?? [:])
-            self = .event(identifier: identifier, event: event)
+            self = .event(identifier: identifier, data: HAWebSocketData(value: dictionary["event"]))
         case .authRequired:
             self = .auth(.required)
         case .authOK:
@@ -62,7 +66,7 @@ internal enum HAWebSocketResponse {
         case .authInvalid:
             self = .auth(.invalid)
         case .none:
-            throw HAWebSocketError.ResponseError.unknownType(type)
+            throw TempError.parseError("unknown response type \(type)")
         }
     }
 }

@@ -1,11 +1,10 @@
-public typealias HAWebSocketEventHandler = (HAWebSocketEventRegistration, HAWebSocketEvent) -> Void
-
 public struct HAWebSocketEventType: RawRepresentable, Hashable {
-    public let rawValue: String
-    public init(rawValue: String) {
+    public let rawValue: String?
+    public init(rawValue: String?) {
         self.rawValue = rawValue
     }
 
+    public static var all: Self = .init(rawValue: nil)
     public static var callService: Self = .init(rawValue: "call_service")
     public static var componentLoaded: Self = .init(rawValue: "component_loaded")
     public static var coreConfigUpdated: Self = .init(rawValue: "core_config_updated")
@@ -22,26 +21,6 @@ public struct HAWebSocketEventType: RawRepresentable, Hashable {
     public static var themesUpdated: Self = .init(rawValue: "themes_updated")
     public static var timerOutOfSync: Self = .init(rawValue: "timer_out_of_sync")
     public static var timeChanged: Self = .init(rawValue: "time_changed")
-}
-
-public class HAWebSocketEventRegistration: Equatable {
-    internal let type: HAWebSocketEventType?
-    internal let handler: HAWebSocketEventHandler
-    internal let uniqueID = UUID()
-    internal var subscriptionIdentifier: HAWebSocketRequestIdentifier?
-
-    internal init(type: HAWebSocketEventType?, handler: @escaping HAWebSocketEventHandler) {
-        self.type = type
-        self.handler = handler
-    }
-
-    internal func fire(_ event: HAWebSocketEvent) {
-        handler(self, event)
-    }
-
-    public static func == (lhs: HAWebSocketEventRegistration, rhs: HAWebSocketEventRegistration) -> Bool {
-        lhs.uniqueID == rhs.uniqueID
-    }
 }
 
 public struct HAWebSocketEvent {
@@ -63,15 +42,7 @@ public struct HAWebSocketEvent {
         case origin
     }
 
-    enum EventError: Error {
-        case missingEventType
-    }
-
-    init(dictionary: [String: Any]) throws {
-        guard let eventTypeRaw = dictionary["event_type"] as? String else {
-            throw EventError.missingEventType
-        }
-
+    init(dictionary: [String: Any]) {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
@@ -79,7 +50,7 @@ public struct HAWebSocketEvent {
         let firedAt = dictionary["time_fired"].flatMap { $0 as? String }.flatMap { formatter.date(from: $0) } ?? Date()
         let origin = (dictionary["origin"] as? String).flatMap { Origin(rawValue: $0) } ?? .local
 
-        self.eventType = .init(rawValue: eventTypeRaw)
+        self.eventType = .init(rawValue: dictionary["event_type"] as? String)
         self.firedAt = firedAt
         self.origin = origin
         self.data = HAWebSocketData(value: dictionary["data"])
