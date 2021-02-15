@@ -65,6 +65,16 @@
                ReferencedContainer = "container:HomeAssistant.xcodeproj">
             </BuildableReference>
          </TestableReference>
+         <TestableReference
+            skipped = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "B3AFD3D792DF991956364B11BD63C984"
+               BuildableName = "HAWebSocket-iOS-Unit-Tests.xctest"
+               BlueprintName = "HAWebSocket-iOS-Unit-Tests"
+               ReferencedContainer = "container:Pods/Pods.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
       </Testables>
    </TestAction>
    <LaunchAction
