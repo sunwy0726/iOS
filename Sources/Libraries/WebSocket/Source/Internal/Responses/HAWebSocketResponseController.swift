@@ -36,7 +36,13 @@ extension HAWebSocketResponseController: Starscream.WebSocketDelegate {
             do {
                 if let data = string.data(using: .utf8),
                    let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                    delegate?.responseController(self, didReceive: try HAWebSocketResponse(dictionary: json))
+                    let response = try HAWebSocketResponse(dictionary: json)
+
+                    if case .auth(.ok) = response {
+                        phase = .command
+                    }
+
+                    delegate?.responseController(self, didReceive: response)
                 }
             } catch {
                 HAWebSocketGlobalConfig.log("text parse error: \(error)")
