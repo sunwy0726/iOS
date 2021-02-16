@@ -1,4 +1,5 @@
 internal protocol HAWebSocketRequestControllerDelegate: AnyObject {
+    func requestControllerShouldSendRequests(_ requestController: HAWebSocketRequestController) -> Bool
     func requestController(
         _ requestController: HAWebSocketRequestController,
         didPrepareRequest request: HAWebSocketRequest,
@@ -53,6 +54,8 @@ internal class HAWebSocketRequestController {
         mutate { state in
             state.pending.insert(invocation)
         }
+
+        prepare()
     }
 
     func cancel(_ request: HAWebSocketRequestInvocation) {
@@ -88,6 +91,8 @@ internal class HAWebSocketRequestController {
     }
 
     func prepare() {
+        guard delegate?.requestControllerShouldSendRequests(self) == true else { return }
+
         let queue = DispatchQueue(label: "websocket-request-controller-callback", target: .main)
         queue.suspend()
 

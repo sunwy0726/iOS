@@ -48,6 +48,7 @@ public class HAWebSocketAPI: HAWebSocket {
             createdConnection = connection
         } else {
             createdConnection = WebSocket(request: request)
+            self.connection = createdConnection
         }
 
         if createdConnection.request.url != request.url {
@@ -63,7 +64,7 @@ public class HAWebSocketAPI: HAWebSocket {
         connection = nil
     }
 
-    public func disconnectTemporarily() {
+    func disconnectTemporarily() {
         disconnect()
     }
 
@@ -98,6 +99,8 @@ public class HAWebSocketAPI: HAWebSocket {
         return subscribe(to: request) { token, data in
             if case let .dictionary(value) = data {
                 handler(token, HAWebSocketEvent(dictionary: value))
+            } else {
+                HAWebSocketGlobalConfig.log("got unknown data for event subscription: \(data)")
             }
         }
     }
@@ -107,7 +110,6 @@ extension HAWebSocketAPI {
     private func sendRaw(_ dictionary: [String: Any], completion: @escaping (Result<Void, HAWebSocketError>) -> Void) {
         guard let connection = connection else {
             preconditionFailure("cannot send commands without a connection")
-            return
         }
 
         do {
@@ -181,6 +183,10 @@ extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
 }
 
 extension HAWebSocketAPI: HAWebSocketRequestControllerDelegate {
+    func requestControllerShouldSendRequests(_ requestController: HAWebSocketRequestController) -> Bool {
+        responseController.phase == .command
+    }
+
     func requestController(
         _ requestController: HAWebSocketRequestController,
         didPrepareRequest request: HAWebSocketRequest,

@@ -1,10 +1,22 @@
 import Foundation
 
 public struct HAWebSocketConnectionInfo {
+    public init(url: URL) {
+        self.url = url
+    }
+
     public var url: URL
 }
 
 public struct HAWebSocketConfiguration {
+    public init(
+        connectionInfo: @escaping () -> HAWebSocketConnectionInfo,
+        fetchAuthToken: @escaping ((Result<String, Error>) -> Void) -> Void
+    ) {
+        self.connectionInfo = connectionInfo
+        self.fetchAuthToken = fetchAuthToken
+    }
+
     public var connectionInfo: () -> HAWebSocketConnectionInfo
     public var fetchAuthToken: (_ completion: (Result<String, Error>) -> Void) -> Void
 }
@@ -41,6 +53,7 @@ public protocol HAWebSocket {
 
     var state: HAWebSocketState { get }
 
+    // defaults to the main queue
     var callbackQueue: DispatchQueue { get set }
 
     func connect()
@@ -50,7 +63,9 @@ public protocol HAWebSocket {
     func send(_ request: HAWebSocketRequest, completion: @escaping RequestCompletion) -> HARequestToken
 
     // handler is invoked many times, until subscription is cancelled
+    @discardableResult
     func subscribe(to request: HAWebSocketRequest, handler: @escaping SubscriptionHandler) -> HARequestToken
+    @discardableResult
     func subscribe(to event: HAWebSocketEventType, handler: @escaping EventSubscriptionHandler) -> HARequestToken
 }
 
