@@ -68,7 +68,7 @@ public class HAWebSocketAPI: HAWebSocket {
     }
 
     public func send(_ request: HAWebSocketRequest, completion: @escaping RequestCompletion) -> HARequestToken {
-        let invocation = HAWebSocketRequestInvocation(request: request, completion: completion)
+        let invocation = HAWebSocketRequestInvocationSingle(request: request, completion: completion)
         requestController.add(invocation)
         return HARequestTokenImpl { [requestController] in
             requestController.cancel(invocation)
@@ -76,10 +76,10 @@ public class HAWebSocketAPI: HAWebSocket {
     }
 
     public func subscribe(to request: HAWebSocketRequest, handler: @escaping SubscriptionHandler) -> HARequestToken {
-        let subscription = HAWebSocketSubscription(request: request, handler: handler)
-        requestController.add(subscription)
+        let invocation = HAWebSocketRequestInvocationSubscription(request: request, handler: handler)
+        requestController.add(invocation)
         return HARequestTokenImpl { [requestController] in
-            requestController.cancel(subscription)
+            requestController.cancel(invocation)
         }
     }
 
@@ -116,8 +116,7 @@ extension HAWebSocketAPI {
                 completion(.success(()))
             })
         } catch {
-
-            completion(.failure(.init(type: .internal(debugDescription: error.localizedDescription))))
+            completion(.failure(.internal(debugDescription: error.localizedDescription)))
         }
     }
 }
@@ -153,7 +152,7 @@ extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
         case let .event(identifier: identifier, data: data):
             if let subscription = requestController.subscription(for: identifier) {
                 callbackQueue.async { [self] in
-                    subscription.fire(token: HARequestTokenImpl { [requestController] in
+                    subscription.invoke(token: HARequestTokenImpl { [requestController] in
                         requestController.cancel(subscription)
                     }, event: data)
                 }
@@ -162,7 +161,7 @@ extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
                 // TODO: send unsubscribe
             }
         case let .result(identifier: identifier, result: result):
-            if let request = requestController.request(for: identifier) {
+            if let request = requestController.single(for: identifier) {
                 callbackQueue.async {
                     request.resolve(result)
                 }

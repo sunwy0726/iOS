@@ -54,17 +54,24 @@ public protocol HAWebSocket {
     func subscribe(to event: HAWebSocketEventType, handler: @escaping EventSubscriptionHandler) -> HARequestToken
 }
 
-public struct HAWebSocketError: Error {
+public enum HAWebSocketError: Error {
+    case `internal`(debugDescription: String)
+    case external(ExternalError)
+
     public struct ExternalError {
         public var code: Int
         public var message: String
-    }
 
-    public enum ErrorType {
-        case `internal`(debugDescription: String)
-        case external(ExternalError)
+        init(_ errorValue: Any) {
+            if let error = errorValue as? [String: Any],
+               let code = error["code"] as? Int,
+               let message = error["message"] as? String {
+                self.code = code
+                self.message = message
+            } else {
+                self.code = -1
+                self.message = "unable to parse error response"
+            }
+        }
     }
-
-    public var type: ErrorType
-    public var originalRequest: HAWebSocketRequest?
 }

@@ -19,20 +19,25 @@ internal enum HAWebSocketResponse {
     case event(identifier: HAWebSocketRequestIdentifier, data: HAWebSocketData)
     case auth(AuthState)
 
+    enum ParseError: Error {
+        case unknownType(Any)
+        case unknownId(Any)
+    }
+
     enum TempError: Error {
         case parseError(String)
     }
 
     init(dictionary: [String: Any]) throws {
         guard let type = dictionary["type"] as? String else {
-            throw TempError.parseError("type is not valid")
+            throw ParseError.unknownType(dictionary["type"])
         }
 
         func parseIdentifier() throws -> HAWebSocketRequestIdentifier {
             if let value = (dictionary["id"] as? Int).flatMap(HAWebSocketRequestIdentifier.init(rawValue:)) {
                 return value
             } else {
-                throw TempError.parseError("id is not valid")
+                throw ParseError.unknownId(dictionary["id"])
             }
         }
 
@@ -43,19 +48,8 @@ internal enum HAWebSocketResponse {
             if dictionary["success"] as? Bool == true {
                 self = .result(identifier: identifier, result: .success(.init(value: dictionary["result"])))
             } else {
-                let externalError: HAWebSocketError.ExternalError
-
-                if let error = dictionary["error"] as? [String: Any],
-                   let code = error["code"] as? Int,
-                   let message = error["message"] as? String {
-                    externalError = .init(code: code, message: message)
-                } else {
-                    externalError = .init(code: -1, message: "unable to parse error response")
-                }
-
-                self = .result(identifier: identifier, result: .failure(.init(type: .external(externalError))))
+                self = .result(identifier: identifier, result: .failure(.external(.init(dictionary["error"]))))
             }
-
         case .event:
             let identifier = try parseIdentifier()
             self = .event(identifier: identifier, data: HAWebSocketData(value: dictionary["event"]))
