@@ -1,0 +1,23 @@
+PODS:
+  - HAWebSocket (0.1.0):
+    - Starscream (~> 4.0.4)
+  - Starscream (4.0.4)
+
+DEPENDENCIES:
+  - HAWebSocket (from `../`)
+
+SPEC REPOS:
+  trunk:
+    - Starscream
+
+EXTERNAL SOURCES:
+  HAWebSocket:
+    :path: "../"
+
+SPEC CHECKSUMS:
+  HAWebSocket: 4a5c329435a57eefdf2d06833abc4aeeace8669a
+  Starscream: 5178aed56b316f13fa3bc55694e583d35dd414d9
+
+PODFILE CHECKSUM: d4475b95ac3fb398a1b516c553a6d5232fb819af
+
+COCOAPODS: 1.10.1
