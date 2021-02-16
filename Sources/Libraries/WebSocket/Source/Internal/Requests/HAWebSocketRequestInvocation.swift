@@ -30,11 +30,11 @@ internal class HAWebSocketRequestInvocation: Equatable, Hashable {
 }
 
 internal class HAWebSocketRequestInvocationSingle: HAWebSocketRequestInvocation {
-    private var completion: HAWebSocket.RequestCompletion?
+    private var completion: HAWebSocketProtocol.RequestCompletion?
 
     init(
         request: HAWebSocketRequest,
-        completion: @escaping HAWebSocket.RequestCompletion
+        completion: @escaping HAWebSocketProtocol.RequestCompletion
     ) {
         self.completion = completion
         super.init(request: request)
@@ -57,11 +57,11 @@ internal class HAWebSocketRequestInvocationSingle: HAWebSocketRequestInvocation 
 }
 
 internal class HAWebSocketRequestInvocationSubscription: HAWebSocketRequestInvocation {
-    private var handler: HAWebSocket.SubscriptionHandler?
+    private var handler: HAWebSocketProtocol.SubscriptionHandler?
 
     init(
         request: HAWebSocketRequest,
-        handler: @escaping HAWebSocket.SubscriptionHandler
+        handler: @escaping HAWebSocketProtocol.SubscriptionHandler
     ) {
         self.handler = handler
         super.init(request: request)

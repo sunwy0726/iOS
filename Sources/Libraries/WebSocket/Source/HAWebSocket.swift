@@ -41,7 +41,14 @@ public protocol HARequestToken {
     func cancel()
 }
 
-public protocol HAWebSocket {
+public enum HAWebSocket {
+    public static var API: HAWebSocketProtocol.Type { HAWebSocketAPI.self }
+    public static func api(configuration: HAWebSocketConfiguration) -> HAWebSocketProtocol {
+        HAWebSocketAPI(configuration: configuration)
+    }
+}
+
+public protocol HAWebSocketProtocol: AnyObject {
     typealias RequestCompletion = (Result<HAWebSocketData, HAWebSocketError>) -> Void
     typealias SubscriptionHandler = (HARequestToken, HAWebSocketData) -> Void
     typealias EventSubscriptionHandler = (HARequestToken, HAWebSocketEvent) -> Void

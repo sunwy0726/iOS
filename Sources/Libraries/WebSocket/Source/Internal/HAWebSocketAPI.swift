@@ -17,7 +17,7 @@ class HARequestTokenImpl: HARequestToken {
     }
 }
 
-public class HAWebSocketAPI: HAWebSocket {
+internal class HAWebSocketAPI: HAWebSocketProtocol {
     public weak var delegate: HAWebSocketDelegate?
     public var configuration: HAWebSocketConfiguration
 
@@ -32,7 +32,7 @@ public class HAWebSocketAPI: HAWebSocket {
     private let requestController = HAWebSocketRequestController()
     private let responseController = HAWebSocketResponseController()
 
-    public required init(configuration: HAWebSocketConfiguration) {
+    required init(configuration: HAWebSocketConfiguration) {
         self.configuration = configuration
         requestController.delegate = self
         responseController.delegate = self
