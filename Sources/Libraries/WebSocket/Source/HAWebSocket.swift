@@ -4,13 +4,13 @@ public struct HAWebSocketConnectionInfo {
     public var url: URL
 }
 
-public protocol HAWebSocketConnectionDelegate: AnyObject {
-    func connectionInfoForWebSocket(_ webSocket: HAWebSocket) -> HAWebSocketConnectionInfo
-    func webSocket(_ webSocket: HAWebSocket, connectionTransitionedTo state: HAWebSocketState)
+public struct HAWebSocketConfiguration {
+    public var connectionInfo: () -> HAWebSocketConnectionInfo
+    public var fetchAuthToken: (_ completion: (Result<String, Error>) -> Void) -> Void
 }
 
-public protocol HAWebSocketAuthDelegate: AnyObject {
-    func webSocket(_ webSocket: HAWebSocket, fetchAccessToken completion: @escaping (Result<String, Error>) -> Void)
+public protocol HAWebSocketDelegate: AnyObject {
+    func webSocket(_ webSocket: HAWebSocket, connectionTransitionedTo state: HAWebSocketState)
 }
 
 public enum HAWebSocketState {
@@ -34,8 +34,10 @@ public protocol HAWebSocket {
     typealias SubscriptionHandler = (HARequestToken, HAWebSocketData) -> Void
     typealias EventSubscriptionHandler = (HARequestToken, HAWebSocketEvent) -> Void
 
-    var connectionDelegate: HAWebSocketConnectionDelegate? { get set }
-    var authDelegate: HAWebSocketAuthDelegate? { get set }
+    var delegate: HAWebSocketDelegate? { get set }
+
+    init(configuration: HAWebSocketConfiguration)
+    var configuration: HAWebSocketConfiguration { get set }
 
     var state: HAWebSocketState { get }
 

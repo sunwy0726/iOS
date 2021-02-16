@@ -1,8 +1,8 @@
 import Starscream
 
 internal protocol HAWebSocketResponseControllerDelegate: AnyObject {
-    func connection(_ connection: HAWebSocketResponseController, didTransitionTo phase: HAWebSocketResponseController.Phase)
-    func connection(_ connection: HAWebSocketResponseController, didReceive response: HAWebSocketResponse)
+    func responseController(_ controller: HAWebSocketResponseController, didTransitionTo phase: HAWebSocketResponseController.Phase)
+    func responseController(_ controller: HAWebSocketResponseController, didReceive response: HAWebSocketResponse)
 }
 
 internal class HAWebSocketResponseController {
@@ -14,10 +14,10 @@ internal class HAWebSocketResponseController {
         case command
     }
 
-    private var phase: Phase = .disconnected {
+    var phase: Phase = .disconnected {
         didSet {
             HAWebSocketGlobalConfig.log("phase transition to \(phase)")
-            delegate?.connection(self, didTransitionTo: phase)
+            delegate?.responseController(self, didTransitionTo: phase)
         }
     }
 }
@@ -36,7 +36,7 @@ extension HAWebSocketResponseController: Starscream.WebSocketDelegate {
             do {
                 if let data = string.data(using: .utf8),
                    let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
-                    delegate?.connection(self, didReceive: try HAWebSocketResponse(dictionary: json))
+                    delegate?.responseController(self, didReceive: try HAWebSocketResponse(dictionary: json))
                 }
             } catch {
                 HAWebSocketGlobalConfig.log("text parse error: \(error)")

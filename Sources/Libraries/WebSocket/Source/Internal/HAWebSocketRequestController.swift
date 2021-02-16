@@ -1,5 +1,9 @@
 internal protocol HAWebSocketRequestControllerDelegate: AnyObject {
-    func 
+    func requestController(
+        _ requestController: HAWebSocketRequestController,
+        didPrepareRequest request: HAWebSocketRequest,
+        with identifier: HAWebSocketRequestIdentifier
+    )
 }
 
 internal class HAWebSocketRequestController {
@@ -7,8 +11,12 @@ internal class HAWebSocketRequestController {
         case request(HAWebSocketRequestInvocation)
         case subscription(HAWebSocketSubscription)
 
+        var requestIdentifier: HAWebSocketRequestIdentifier? {
+            requestInvocation?.requestIdentifier ?? subscription?.subscriptionIdentifier
+        }
+
         var needsAssignment: Bool {
-            request?.requestIdentifier == nil && subscription?.subscriptionIdentifier == nil
+            requestIdentifier == nil
         }
 
         func assign(identifier: HAWebSocketRequestIdentifier) {
@@ -20,7 +28,14 @@ internal class HAWebSocketRequestController {
             }
         }
 
-        var request: HAWebSocketRequestInvocation? {
+        var request: HAWebSocketRequest {
+            switch self {
+            case .request(let request): return request.request
+            case .subscription(let subscription): return subscription.request
+            }
+        }
+
+        var requestInvocation: HAWebSocketRequestInvocation? {
             if case let .request(request) = self {
                 return request
             } else {
@@ -52,6 +67,8 @@ internal class HAWebSocketRequestController {
         var identifierGenerator = IdentifierGenerator()
     }
 
+    weak var delegate: HAWebSocketRequestControllerDelegate?
+
     private var state: State = .init() {
         willSet {
             dispatchPrecondition(condition: .onQueueAsBarrier(stateQueue))
@@ -60,10 +77,11 @@ internal class HAWebSocketRequestController {
 
     private var stateQueue = DispatchQueue(label: "hawebsocket-request-state")
 
-    private func mutate(using handler: @escaping (inout State) -> Void) {
+    private func mutate(using handler: @escaping (inout State) -> Void, then perform: @escaping () -> Void = {}) {
         dispatchPrecondition(condition: .notOnQueue(stateQueue))
         stateQueue.async(execute: .init(qos: .default, flags: .barrier, block: { [self] in
             handler(&state)
+            DispatchQueue.main.async(execute: perform)
         }))
     }
 
@@ -121,7 +139,7 @@ internal class HAWebSocketRequestController {
 
     func request(for identifier: HAWebSocketRequestIdentifier) -> HAWebSocketRequestInvocation? {
         read { state in
-            state.pending.compactMap(\.request).first(where: { $0.requestIdentifier == identifier })
+            state.pending.compactMap(\.requestInvocation).first(where: { $0.requestIdentifier == identifier })
         }
     }
 
@@ -131,20 +149,22 @@ internal class HAWebSocketRequestController {
         }
     }
 
-    func enumerateAssigning(on queue: DispatchQueue = .main, handler: @escaping (RequestType) -> Void) {
-        mutate { state in
-            let pending = state.pending.filter(\.needsAssignment)
-            for item in pending {
+    func prepare() {
+        let queue = DispatchQueue(label: "websocket-request-controller-callback", target: .main)
+        queue.suspend()
+
+        mutate(using: { state in
+            for item in state.pending.filter(\.needsAssignment) {
                 let identifier = state.identifierGenerator.next()
                 state.active[identifier] = item
                 item.assign(identifier: identifier)
-            }
 
-            queue.async {
-                for item in pending {
-                    handler(item)
+                queue.async { [self] in
+                    delegate?.requestController(self, didPrepareRequest: item.request, with: identifier)
                 }
             }
-        }
+        }, then: {
+            queue.resume()
+        })
     }
 }
