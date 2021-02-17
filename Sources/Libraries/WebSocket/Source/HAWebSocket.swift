@@ -73,6 +73,7 @@ public protocol HAWebSocketProtocol: AnyObject {
     func send<T>(_ request: HAWebSocketTypedRequest<T>, completion: @escaping (Result<T, HAWebSocketError>) -> Void) -> HARequestToken
 
     // handler is invoked many times, until subscription is cancelled
+    // TODO: add error handler
     @discardableResult
     func subscribe(to request: HAWebSocketRequest, handler: @escaping SubscriptionHandler) -> HARequestToken
     @discardableResult
