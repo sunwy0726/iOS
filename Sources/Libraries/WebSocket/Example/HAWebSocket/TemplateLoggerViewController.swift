@@ -22,14 +22,43 @@ class TemplateLoggerViewController: UIViewController {
         textView.text = "initial"
 
         websocket.connect()
-        websocket.subscribe(to: .init(
-            type: .renderTemplate,
-            data: ["template": "{{ now() }}"]
-        ), handler: { [textView] token, data in
-            if case let .dictionary(underlying) = data,
-               let result = underlying["result"] as? String {
-                textView.text = result
+//        websocket.subscribe(to: .init(
+//            type: .renderTemplate,
+//            data: ["template": "{{ states.device_tracker | count }}"]
+////            data: ["template": "{{ now() }} {{ states('sun.sun') }} {{ states.device_tracker | count }}"]
+//        ), handler: { [textView] token, data in
+//            if case let .dictionary(underlying) = data,
+//               let result = underlying["result"] {
+//                textView.text = String(describing: result)
+//            }
+//        })
+
+        websocket.subscribe(
+            to: .renderTemplate("{{ now() }} {{ states('sun.sun') }} {{ states.device_tracker | count }}"),
+            handler: { [textView] token, response in
+                textView.text = String(describing: response.result)
+                print(response)
             }
-        })
+        )
+
+        websocket.send(.currentUser()) { result in
+            switch result {
+            case .success(let user):
+                print(user)
+            case .failure(let error):
+                print(error)
+            }
+        }
+
+//        websocket.subscribe(to:  .init(
+//            type: .renderTemplate,
+//            data: ["template": "{{ states.device_tracker | count }}"]
+////            data: ["template": "{{ now() }} {{ states('sun.sun') }} {{ states.device_tracker | count }}"]
+//        ), handler: { [textView] token, data in
+//            if case let .dictionary(underlying) = data,
+//               let result = underlying["result"] {
+//                textView.text = String(describing: result)
+//            }
+//        })
     }
 }
