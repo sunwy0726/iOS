@@ -25,3 +25,22 @@ public struct HAWebSocketRequest {
     public var type: HAWebSocketRequestType
     public var data: [String: Any] // top-level
 }
+
+public protocol HAWebSocketResponseDecodable {
+    // one day, if Decodable can handle 'Any' types well, this can be init(decoder:)
+    init?(data: HAWebSocketData)
+}
+
+public struct HAWebSocketTypedSubscription<ResponseType: HAWebSocketResponseDecodable> {
+    public var request: HAWebSocketRequest
+    public init(request: HAWebSocketRequest) {
+        self.request = request
+    }
+}
+
+public struct HAWebSocketTypedRequest<ResponseType: HAWebSocketResponseDecodable> {
+    public var request: HAWebSocketRequest
+    public init(request: HAWebSocketRequest) {
+        self.request = request
+    }
+}

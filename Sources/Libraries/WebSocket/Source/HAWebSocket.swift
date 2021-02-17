@@ -67,13 +67,18 @@ public protocol HAWebSocketProtocol: AnyObject {
     func disconnect()
 
     // completion is invoked exactly once
+    @discardableResult
     func send(_ request: HAWebSocketRequest, completion: @escaping RequestCompletion) -> HARequestToken
+    @discardableResult
+    func send<T>(_ request: HAWebSocketTypedRequest<T>, completion: @escaping (Result<T, HAWebSocketError>) -> Void) -> HARequestToken
 
     // handler is invoked many times, until subscription is cancelled
     @discardableResult
     func subscribe(to request: HAWebSocketRequest, handler: @escaping SubscriptionHandler) -> HARequestToken
     @discardableResult
     func subscribe(to event: HAWebSocketEventType, handler: @escaping EventSubscriptionHandler) -> HARequestToken
+    @discardableResult
+    func subscribe<T>(to request: HAWebSocketTypedSubscription<T>, handler: @escaping (HARequestToken, T) -> Void) -> HARequestToken
 }
 
 public enum HAWebSocketError: Error {

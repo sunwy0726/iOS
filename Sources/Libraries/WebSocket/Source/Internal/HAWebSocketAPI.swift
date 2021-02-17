@@ -76,6 +76,18 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
         }
     }
 
+    func send<T>(_ request: HAWebSocketTypedRequest<T>, completion: @escaping (Result<T, HAWebSocketError>) -> Void) -> HARequestToken {
+        send(request.request) { result in
+            completion(result.flatMap { data in
+                if let updated = T(data: data) {
+                    return .success(updated)
+                } else {
+                    return .failure(.internal(debugDescription: "couldn't decode result from '\(data)'"))
+                }
+            })
+        }
+    }
+
     public func subscribe(to request: HAWebSocketRequest, handler: @escaping SubscriptionHandler) -> HARequestToken {
         let invocation = HAWebSocketRequestInvocationSubscription(request: request, handler: handler)
         requestController.add(invocation)
@@ -101,6 +113,14 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
                 handler(token, HAWebSocketEvent(dictionary: value))
             } else {
                 HAWebSocketGlobalConfig.log("got unknown data for event subscription: \(data)")
+            }
+        }
+    }
+
+    public func subscribe<T>(to request: HAWebSocketTypedSubscription<T>, handler: @escaping (HARequestToken, T) -> Void) -> HARequestToken {
+        return subscribe(to: request.request) { token, data in
+            if let value = T(data: data) {
+                handler(token, value)
             }
         }
     }
