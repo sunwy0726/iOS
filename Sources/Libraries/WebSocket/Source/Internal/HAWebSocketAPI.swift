@@ -38,6 +38,8 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
         responseController.delegate = self
     }
 
+    // MARK: - Connection Handling
+
     public func connect() {
         let connectionInfo = configuration.connectionInfo()
         let request = URLRequest(url: connectionInfo.url)
@@ -68,7 +70,12 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
         disconnect()
     }
 
-    public func send(_ request: HAWebSocketRequest, completion: @escaping RequestCompletion) -> HARequestToken {
+    // MARK: - Sending
+
+    public func send(
+        _ request: HAWebSocketRequest,
+        completion: @escaping RequestCompletion
+    ) -> HARequestToken {
         let invocation = HAWebSocketRequestInvocationSingle(request: request, completion: completion)
         requestController.add(invocation)
         return HARequestTokenImpl { [requestController] in
@@ -76,7 +83,10 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
         }
     }
 
-    func send<T>(_ request: HAWebSocketTypedRequest<T>, completion: @escaping (Result<T, HAWebSocketError>) -> Void) -> HARequestToken {
+    public func send<T>(
+        _ request: HAWebSocketTypedRequest<T>,
+        completion: @escaping (Result<T, HAWebSocketError>) -> Void
+    ) -> HARequestToken {
         send(request.request) { result in
             completion(result.flatMap { data in
                 if let updated = T(data: data) {
@@ -88,43 +98,64 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
         }
     }
 
-    public func subscribe(to request: HAWebSocketRequest, handler: @escaping SubscriptionHandler) -> HARequestToken {
-        let invocation = HAWebSocketRequestInvocationSubscription(request: request, handler: handler)
-        requestController.add(invocation)
-        return HARequestTokenImpl { [requestController] in
-            requestController.cancel(invocation)
-        }
-    }
+    // MARK: Subscribing
 
-    public func subscribe(
-        to event: HAWebSocketEventType,
-        handler: @escaping EventSubscriptionHandler
+    private func commonSubscribe(
+        to request: HAWebSocketRequest,
+        initiated: SubscriptionInitiatedHandler?,
+        handler: @escaping SubscriptionHandler
     ) -> HARequestToken {
-        let request = HAWebSocketRequest(type: .subscribeEvents, data: {
-            if let type = event.rawValue {
-                return ["event_type": type]
-            } else {
-                return [:]
-            }
-        }())
-
-        return subscribe(to: request) { token, data in
-            if case let .dictionary(value) = data {
-                handler(token, HAWebSocketEvent(dictionary: value))
-            } else {
-                HAWebSocketGlobalConfig.log("got unknown data for event subscription: \(data)")
-            }
+        let sub = HAWebSocketRequestInvocationSubscription(request: request, initiated: initiated, handler: handler)
+        requestController.add(sub)
+        return HARequestTokenImpl { [requestController] in
+            requestController.cancel(sub)
         }
     }
 
-    public func subscribe<T>(to request: HAWebSocketTypedSubscription<T>, handler: @escaping (HARequestToken, T) -> Void) -> HARequestToken {
-        return subscribe(to: request.request) { token, data in
+    private func commonSubscribe<T>(
+        to request: HAWebSocketTypedSubscription<T>,
+        initiated: SubscriptionInitiatedHandler?,
+        handler: @escaping (HARequestToken, T) -> Void
+    ) -> HARequestToken {
+        return commonSubscribe(to: request.request, initiated: initiated, handler: { token, data in
             if let value = T(data: data) {
                 handler(token, value)
             }
-        }
+        })
+    }
+
+    public func subscribe(
+        to request: HAWebSocketRequest,
+        handler: @escaping SubscriptionHandler
+    ) -> HARequestToken {
+        commonSubscribe(to: request, initiated: nil, handler: handler)
+    }
+
+    public func subscribe(
+        to request: HAWebSocketRequest,
+        initiated: @escaping SubscriptionInitiatedHandler,
+        handler: @escaping SubscriptionHandler
+    ) -> HARequestToken {
+        commonSubscribe(to: request, initiated: initiated, handler: handler)
+    }
+
+    public func subscribe<T>(
+        to request: HAWebSocketTypedSubscription<T>,
+        handler: @escaping (HARequestToken, T) -> Void
+    ) -> HARequestToken {
+        commonSubscribe(to: request, initiated: nil, handler: handler)
+    }
+
+    public func subscribe<T>(
+        to request: HAWebSocketTypedSubscription<T>,
+        initiated: @escaping SubscriptionInitiatedHandler,
+        handler: @escaping (HARequestToken, T) -> Void
+    ) -> HARequestToken {
+        commonSubscribe(to: request, initiated: initiated, handler: handler)
     }
 }
+
+// MARK: -
 
 extension HAWebSocketAPI {
     private func sendRaw(_ dictionary: [String: Any], completion: @escaping (Result<Void, HAWebSocketError>) -> Void) {
@@ -187,6 +218,10 @@ extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
                 callbackQueue.async {
                     request.resolve(result)
                 }
+            } else if let subscription = requestController.subscription(for: identifier) {
+                callbackQueue.async {
+                    subscription.resolve(result)
+                }
             } else {
                 HAWebSocketGlobalConfig.log("unable to find request for identifier \(identifier)")
             }
@@ -215,6 +250,8 @@ extension HAWebSocketAPI: HAWebSocketRequestControllerDelegate {
         var data = request.data
         data["id"] = identifier.rawValue
         data["type"] = request.type.rawValue
+
+        print("sending \(data)")
 
         sendRaw(data) { result in
 

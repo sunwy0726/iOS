@@ -24,6 +24,11 @@ internal class HAWebSocketRequestInvocation: Equatable, Hashable {
         identifier == nil
     }
 
+    func cancelInvocation() -> HAWebSocketRequestInvocation? {
+        // most requests do not need another request to be sent to be cancelled
+        nil
+    }
+
     func cancel() {
         // for subclasses
     }
@@ -58,11 +63,14 @@ internal class HAWebSocketRequestInvocationSingle: HAWebSocketRequestInvocation 
 
 internal class HAWebSocketRequestInvocationSubscription: HAWebSocketRequestInvocation {
     private var handler: HAWebSocketProtocol.SubscriptionHandler?
+    private var initiated: HAWebSocketProtocol.SubscriptionInitiatedHandler?
 
     init(
         request: HAWebSocketRequest,
+        initiated: HAWebSocketProtocol.SubscriptionInitiatedHandler?,
         handler: @escaping HAWebSocketProtocol.SubscriptionHandler
     ) {
+        self.initiated = initiated
         self.handler = handler
         super.init(request: request)
     }
@@ -70,13 +78,29 @@ internal class HAWebSocketRequestInvocationSubscription: HAWebSocketRequestInvoc
     override func cancel() {
         super.cancel()
         handler = nil
+        initiated = nil
     }
 
     override var needsAssignment: Bool {
         super.needsAssignment && handler != nil
     }
 
-    internal func invoke(token: HARequestTokenImpl, event: HAWebSocketData) {
+    override func cancelInvocation() -> HAWebSocketRequestInvocation? {
+        if let identifier = identifier {
+            return HAWebSocketRequestInvocationSingle(request: .init(
+                type: .unsubscribeEvents,
+                data: ["subscription": identifier.rawValue]
+            ), completion: { _ in })
+        } else {
+            return nil
+        }
+    }
+
+    func resolve(_ result: Result<HAWebSocketData, HAWebSocketError>) {
+        initiated?(result)
+    }
+
+    func invoke(token: HARequestTokenImpl, event: HAWebSocketData) {
         handler?(token, event)
     }
 }

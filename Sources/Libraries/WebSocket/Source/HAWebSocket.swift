@@ -50,8 +50,8 @@ public enum HAWebSocket {
 
 public protocol HAWebSocketProtocol: AnyObject {
     typealias RequestCompletion = (Result<HAWebSocketData, HAWebSocketError>) -> Void
+    typealias SubscriptionInitiatedHandler = (Result<HAWebSocketData, HAWebSocketError>) -> Void
     typealias SubscriptionHandler = (HARequestToken, HAWebSocketData) -> Void
-    typealias EventSubscriptionHandler = (HARequestToken, HAWebSocketEvent) -> Void
 
     var delegate: HAWebSocketDelegate? { get set }
 
@@ -68,18 +68,41 @@ public protocol HAWebSocketProtocol: AnyObject {
 
     // completion is invoked exactly once
     @discardableResult
-    func send(_ request: HAWebSocketRequest, completion: @escaping RequestCompletion) -> HARequestToken
+    func send(
+        _ request: HAWebSocketRequest,
+        completion: @escaping RequestCompletion
+    ) -> HARequestToken
     @discardableResult
-    func send<T>(_ request: HAWebSocketTypedRequest<T>, completion: @escaping (Result<T, HAWebSocketError>) -> Void) -> HARequestToken
+    func send<T>(
+        _ request: HAWebSocketTypedRequest<T>,
+        completion: @escaping (Result<T, HAWebSocketError>) -> Void
+    ) -> HARequestToken
 
     // handler is invoked many times, until subscription is cancelled
-    // TODO: add error handler
+    // initiated is called at least once, but may be called on each reconnect
     @discardableResult
-    func subscribe(to request: HAWebSocketRequest, handler: @escaping SubscriptionHandler) -> HARequestToken
+    func subscribe(
+        to request: HAWebSocketRequest,
+        handler: @escaping SubscriptionHandler
+    ) -> HARequestToken
     @discardableResult
-    func subscribe(to event: HAWebSocketEventType, handler: @escaping EventSubscriptionHandler) -> HARequestToken
+    func subscribe(
+        to request: HAWebSocketRequest,
+        initiated: @escaping SubscriptionInitiatedHandler,
+        handler: @escaping SubscriptionHandler
+    ) -> HARequestToken
+
     @discardableResult
-    func subscribe<T>(to request: HAWebSocketTypedSubscription<T>, handler: @escaping (HARequestToken, T) -> Void) -> HARequestToken
+    func subscribe<T>(
+        to request: HAWebSocketTypedSubscription<T>,
+        handler: @escaping (HARequestToken, T) -> Void
+    ) -> HARequestToken
+    @discardableResult
+    func subscribe<T>(
+        to request: HAWebSocketTypedSubscription<T>,
+        initiated: @escaping SubscriptionInitiatedHandler,
+        handler: @escaping (HARequestToken, T) -> Void
+    ) -> HARequestToken
 }
 
 public enum HAWebSocketError: Error {

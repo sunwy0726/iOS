@@ -35,9 +35,11 @@ class TemplateLoggerViewController: UIViewController {
 
         websocket.subscribe(
             to: .renderTemplate("{{ now() }} {{ states('sun.sun') }} {{ states.device_tracker | count }}"),
+            initiated: { _ in },
             handler: { [textView] token, response in
                 textView.text = String(describing: response.result)
                 print(response)
+                token.cancel()
             }
         )
 
@@ -49,6 +51,15 @@ class TemplateLoggerViewController: UIViewController {
                 print(error)
             }
         }
+
+        websocket.subscribe(
+            to: .events(.all),
+            initiated: { result in
+                print(result)
+            }, handler: { token, event in
+                print(event)
+            }
+        )
 
 //        websocket.subscribe(to:  .init(
 //            type: .renderTemplate,

@@ -59,11 +59,24 @@ internal class HAWebSocketRequestController {
     }
 
     func cancel(_ request: HAWebSocketRequestInvocation) {
-        mutate { state in
-            state.pending.remove(request)
-        }
-
+        // intentionally grabbed before entering the mutex
+        let identifier = request.identifier
+        let cancelInvocation = request.cancelInvocation()
         request.cancel()
+
+        mutate(using: { state in
+            state.pending.remove(request)
+            
+            if let identifier = identifier {
+                state.active[identifier] = nil
+            }
+
+            if let cancelInvocation = cancelInvocation {
+                state.pending.insert(cancelInvocation)
+            }
+        }, then: { [self] in
+            prepare()
+        })
     }
 
     func resetActive() {

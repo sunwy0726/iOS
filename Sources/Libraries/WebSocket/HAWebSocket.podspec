@@ -12,6 +12,7 @@ Pod::Spec.new do |s|
 
   s.ios.deployment_target = '12.0'
   s.watchos.deployment_target = '5.0'
+  s.macos.deployment_target = '10.14'
 
   s.source_files = 'Source/**/*.swift'
   s.dependency 'Starscream', '~> 4.0.4'

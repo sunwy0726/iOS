@@ -27,18 +27,34 @@ public struct HAResponseRenderTemplate: HAWebSocketResponseDecodable {
         public var domains: [String]
 
         public init(value: [String: Any]) {
-            self.all = value["all"] as? Bool ?? false
-            self.time = value["time"] as? Bool ?? false
-            self.entities = value["entities"] as? [String] ?? []
-            self.domains = value["domains"] as? [String] ?? []
+            self.init(
+                all: value["all"] as? Bool ?? false,
+                time: value["time"] as? Bool ?? false,
+                entities: value["entities"] as? [String] ?? [],
+                domains: value["domains"] as? [String] ?? []
+            )
+        }
+
+        public init(
+            all: Bool,
+            time: Bool,
+            entities: [String],
+            domains: [String]
+        ) {
+            self.all = all
+            self.time = time
+            self.entities = entities
+            self.domains = domains
         }
     }
 
     public init?(data: HAWebSocketData) {
         guard let result = data["result"] else { return nil }
 
-        self.result = result
-        self.listeners = Listeners(value: data["listeners"] as? [String: Any] ?? [:])
+        self.init(
+            result: result,
+            listeners: Listeners(value: data["listeners"] as? [String: Any] ?? [:])
+        )
     }
 
     public init(result: Any, listeners: Listeners) {
