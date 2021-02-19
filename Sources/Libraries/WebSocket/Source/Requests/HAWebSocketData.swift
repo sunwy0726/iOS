@@ -68,6 +68,28 @@ public enum HAWebSocketData {
         }
     }
 
+    private static let formatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+        return formatter
+    }()
+
+    /// Convenience acess to the dictionary case for a particular key which should be a date
+    ///
+    /// - Parameter key: The key to look up in `dictionary` case
+    /// - Parameter fallback: The fallback value to use if not found in the dictionary
+    /// - Returns: The value from the dictionary
+    /// - Throws: If the key was not present in the dictionary or the type couldn't be converted to a date
+    func getDate(_ key: String) throws -> Date {
+        let value: String = try get(key)
+        if let date = Self.formatter.date(from: value) {
+            return date
+        } else {
+            throw HAWebSocketDataError.couldntTransform(key: key)
+        }
+    }
+
     /// Convert an unknown value type into an enum case
     /// For use with direct response handling.
     ///

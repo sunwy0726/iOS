@@ -75,5 +75,4 @@ public struct HAResponseCurrentUser: HAWebSocketResponseDecodable {
         self.credentials = credentials
         self.mfaModules = mfaModules
     }
-
 }

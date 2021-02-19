@@ -13,7 +13,7 @@ public extension HAWebSocketTypedSubscription {
 }
 
 public struct HAWebSocketEventType: RawRepresentable, Hashable {
-    public let rawValue: String?
+    public var rawValue: String?
     public init(rawValue: String?) {
         self.rawValue = rawValue
     }
@@ -40,11 +40,11 @@ public struct HAWebSocketEventType: RawRepresentable, Hashable {
 }
 
 public struct HAResponseEvent: HAWebSocketResponseDecodable {
-    public let type: HAWebSocketEventType
-    public let timeFired: Date
-    public let data: [String: Any]
-    public let origin: Origin
-    public let context: Context
+    public var type: HAWebSocketEventType
+    public var timeFired: Date
+    public var data: [String: Any]
+    public var origin: Origin
+    public var context: Context
 
     public enum Origin: String {
         case local = "LOCAL"
@@ -75,16 +75,9 @@ public struct HAResponseEvent: HAWebSocketResponseDecodable {
         }
     }
 
-    private static let formatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
-        return formatter
-    }()
-
     public init(data: HAWebSocketData) throws {
         self.type = .init(rawValue: try data.get("event_type"))
-        self.timeFired = try data.get("time_fired", transform: Self.formatter.date(from:))
+        self.timeFired = try data.getDate("time_fired")
         self.data = data.get("data", fallback: [:])
         self.origin = try data.get("origin", transform: Origin.init(rawValue:))
         self.context = try data.get("context", transform: Context.init(data:))

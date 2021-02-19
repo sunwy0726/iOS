@@ -71,12 +71,14 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
     }
 
     public func disconnect() {
+        // TODO: none of the connection handling is good right now
         connection?.delegate = nil
         connection?.disconnect(closeCode: CloseCode.goingAway.rawValue)
         connection = nil
     }
 
     func disconnectTemporarily() {
+        // TODO: none of the connection handling is good right now
         disconnect()
     }
 

@@ -72,6 +72,10 @@ class TemplateLoggerViewController: UIViewController {
             }
         )
 
+        websocket.subscribe(to: .stateChanged(), handler: { token, event in
+            print(event)
+        })
+
 //        websocket.subscribe(to:  .init(
 //            type: .renderTemplate,
 //            data: ["template": "{{ states.device_tracker | count }}"]

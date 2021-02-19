@@ -1,6 +1,6 @@
 /// The command to issue via the WebSocket
 public struct HAWebSocketRequestType: RawRepresentable, Hashable {
-    public let rawValue: String
+    public var rawValue: String
     public init(rawValue: String) {
         self.rawValue = rawValue
     }
@@ -37,7 +37,7 @@ public struct HAWebSocketRequest {
     public var shouldRetry: Bool
 }
 
-// TODO: can I somehow get Void to work with the type system?
+// TODO: can I somehow get Void to work with the type system? it can't conform to decodable itself
 public struct HAResponseVoid: HAWebSocketResponseDecodable {
     public init(data: HAWebSocketData) throws {}
 }
