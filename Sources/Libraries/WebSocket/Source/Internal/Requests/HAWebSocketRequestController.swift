@@ -91,6 +91,8 @@ internal class HAWebSocketRequestController {
             }
 
             state.active.removeAll()
+
+            // TODO: reset id?
         }
     }
 
