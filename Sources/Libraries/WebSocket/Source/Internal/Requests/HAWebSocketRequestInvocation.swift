@@ -89,7 +89,8 @@ internal class HAWebSocketRequestInvocationSubscription: HAWebSocketRequestInvoc
         if let identifier = identifier {
             return HAWebSocketRequestInvocationSingle(request: .init(
                 type: .unsubscribeEvents,
-                data: ["subscription": identifier.rawValue]
+                data: ["subscription": identifier.rawValue],
+                shouldRetry: false
             ), completion: { _ in })
         } else {
             return nil

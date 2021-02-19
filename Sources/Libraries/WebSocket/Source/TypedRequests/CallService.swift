@@ -3,7 +3,7 @@ public extension HAWebSocketTypedRequest {
         domain: String,
         service: String,
         data: [String: Any] = [:]
-    ) -> HAWebSocketTypedSubscription<HAResponseVoid> {
+    ) -> HAWebSocketTypedRequest<HAResponseVoid> {
         return .init(request: .init(type: .callService, data: [
             "domain": domain,
             "service": service,

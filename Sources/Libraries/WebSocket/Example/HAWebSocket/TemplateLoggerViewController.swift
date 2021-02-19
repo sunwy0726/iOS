@@ -13,8 +13,19 @@ class TemplateLoggerViewController: UIViewController {
         }
     ))
 
+    @objc private func toggle() {
+        switch websocket.state {
+        case .connecting, .ready: websocket.disconnect()
+        case .disconnected: websocket.connect()
+        }
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
+
+        navigationItem.rightBarButtonItems = [
+            UIBarButtonItem(title: "Toggle", style: .plain, target: self, action: #selector(toggle))
+        ]
 
         view.addSubview(textView)
         textView.frame = view.bounds
@@ -39,7 +50,7 @@ class TemplateLoggerViewController: UIViewController {
             handler: { [textView] token, response in
                 textView.text = String(describing: response.result)
                 print(response)
-                token.cancel()
+//                token.cancel()
             }
         )
 

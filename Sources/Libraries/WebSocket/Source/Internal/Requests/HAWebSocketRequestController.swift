@@ -81,8 +81,12 @@ internal class HAWebSocketRequestController {
 
     func resetActive() {
         mutate { state in
-            for pending in state.pending {
-                pending.identifier = nil
+            for invocation in state.pending {
+                if invocation.request.shouldRetry {
+                    invocation.identifier = nil
+                } else {
+                    state.pending.remove(invocation)
+                }
             }
 
             state.active.removeAll()

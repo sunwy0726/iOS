@@ -16,11 +16,10 @@ public struct HAResponseCurrentUser: HAWebSocketResponseDecodable {
         public var type: String
         public var id: String?
 
-        public init?(value: [String: Any]) {
-            guard let type = value["auth_provider_type"] as? String else { return nil }
+        public init(data: HAWebSocketData) throws {
             self.init(
-                type: type,
-                id: value["auth_provider_id"] as? String
+                type: try data.get("auth_provider_type"),
+                id: data.get("auth_provider_id", fallback: nil)
             )
         }
 
@@ -35,18 +34,11 @@ public struct HAResponseCurrentUser: HAWebSocketResponseDecodable {
         public var name: String
         public var isEnabled: Bool
 
-        public init?(value: [String: Any]) {
-            guard let id = value["id"] as? String,
-                  let name = value["name"] as? String,
-                  let isEnabled = value["enabled"] as? Bool
-            else {
-                return nil
-            }
-
+        public init(data: HAWebSocketData) throws {
             self.init(
-                id: id,
-                name: name,
-                isEnabled: isEnabled
+                id: try data.get("id"),
+                name: try data.get("name"),
+                isEnabled: try data.get("enabled")
             )
         }
 
@@ -57,18 +49,14 @@ public struct HAResponseCurrentUser: HAWebSocketResponseDecodable {
         }
     }
 
-    public init?(data: HAWebSocketData) {
-        guard let id = data["id"] as? String else {
-            return nil
-        }
-
+    public init(data: HAWebSocketData) throws {
         self.init(
-            id: id,
-            name: data["name"] as? String,
-            isOwner: data["is_owner"] as? Bool ?? false,
-            isAdmin: data["is_admin"] as? Bool ?? false,
-            credentials: (data["credentials"] as? [[String: Any]])?.compactMap(Credential.init(value:)) ?? [],
-            mfaModules: (data["mfa_modules"] as? [[String: Any]])?.compactMap(MFAModule.init(value:)) ?? []
+            id: try data.get("id"),
+            name: data.get("name", fallback: nil),
+            isOwner: data.get("is_owner", fallback: false),
+            isAdmin: data.get("is_admin", fallback: false),
+            credentials: try data.get("credentials", fallback: []).compactMap(Credential.init(data:)),
+            mfaModules: try data.get("mfa_modules", fallback: []).compactMap(MFAModule.init(data:))
         )
     }
 

@@ -22,20 +22,24 @@ public struct HAWebSocketRequest {
     /// - Parameters:
     ///   - type: The type of the request to issue
     ///   - data: The data to accompany with the request, at the top level
-    public init(type: HAWebSocketRequestType, data: [String : Any]) {
+    ///   - shouldRetry: Whether to retry the request when a connection change occurs
+    public init(type: HAWebSocketRequestType, data: [String : Any], shouldRetry: Bool = true) {
         self.type = type
         self.data = data
+        self.shouldRetry = shouldRetry
     }
 
     /// The type of the request to be issued
     public var type: HAWebSocketRequestType
     /// Additional top-level data to include in the request
     public var data: [String: Any]
+    /// Whether the request should be retried if the connection closes and reopens
+    public var shouldRetry: Bool
 }
 
 // TODO: can I somehow get Void to work with the type system?
 public struct HAResponseVoid: HAWebSocketResponseDecodable {
-    public init?(data: HAWebSocketData) {}
+    public init(data: HAWebSocketData) throws {}
 }
 
 /// A response value which can be decoded by our data representation
@@ -44,7 +48,7 @@ public struct HAResponseVoid: HAWebSocketResponseDecodable {
 ///         and given our heavy reliance on JSON for the communication format, we cannot reasonably offer Decodable support.
 public protocol HAWebSocketResponseDecodable {
     // one day, if Decodable can handle 'Any' types well, this can be init(decoder:)
-    init?(data: HAWebSocketData)
+    init(data: HAWebSocketData) throws
 }
 
 /// A request which has a strongly-typed response format

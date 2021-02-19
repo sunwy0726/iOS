@@ -36,15 +36,15 @@ public struct HAWebSocketEventType: RawRepresentable, Hashable {
     public static var shoppingListUpdated: Self = .init(rawValue: "shopping_list_updated")
     public static var stateChanged: Self = .init(rawValue: "state_changed")
     public static var themesUpdated: Self = .init(rawValue: "themes_updated")
-    public static var timeChanged: Self = .init(rawValue: "time_changed")
-    public static var timerOutOfSync: Self = .init(rawValue: "timer_out_of_sync")}
+    public static var timerOutOfSync: Self = .init(rawValue: "timer_out_of_sync")
+}
 
 public struct HAResponseEvent: HAWebSocketResponseDecodable {
-    public var type: HAWebSocketEventType
-    public var timeFired: Date
-    public var data: [String: Any]
-    public var origin: Origin
-    public var context: Context
+    public let type: HAWebSocketEventType
+    public let timeFired: Date
+    public let data: [String: Any]
+    public let origin: Origin
+    public let context: Context
 
     public enum Origin: String {
         case local = "LOCAL"
@@ -56,15 +56,11 @@ public struct HAResponseEvent: HAWebSocketResponseDecodable {
         public var userId: String?
         public var parentId: String?
 
-        public init?(value: [String: Any]) {
-            guard let id = value["id"] as? String else {
-                return nil
-            }
-
+        public init(data: HAWebSocketData) throws {
             self.init(
-                id: id,
-                userId: value["user_id"] as? String,
-                parentId: value["parent_id"] as? String
+                id: try data.get("id"),
+                userId: data.get("user_id", fallback: nil),
+                parentId: data.get("parent_id", fallback: nil)
             )
         }
 
@@ -86,22 +82,12 @@ public struct HAResponseEvent: HAWebSocketResponseDecodable {
         return formatter
     }()
 
-    public init?(data: HAWebSocketData) {
-        guard let eventType = data["event_type"] as? String,
-              let timeFired = (data["time_fired"] as? String).flatMap(Self.formatter.date(from:)),
-              let origin = (data["origin"] as? String).flatMap(Origin.init(rawValue:)),
-              let context = (data["context"] as? [String: Any]).flatMap(Context.init(value:))
-        else {
-            return nil
-        }
-
-        self.init(
-            type: .init(rawValue: eventType),
-            timeFired: timeFired,
-            data: data["data"] as? [String: Any] ?? [:],
-            origin: origin,
-            context: context
-        )
+    public init(data: HAWebSocketData) throws {
+        self.type = .init(rawValue: try data.get("event_type"))
+        self.timeFired = try data.get("time_fired", transform: Self.formatter.date(from:))
+        self.data = data.get("data", fallback: [:])
+        self.origin = try data.get("origin", transform: Origin.init(rawValue:))
+        self.context = try data.get("context", transform: Context.init(data:))
     }
 
     public init(

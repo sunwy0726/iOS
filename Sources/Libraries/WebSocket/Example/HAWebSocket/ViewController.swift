@@ -20,8 +20,16 @@ class ViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
 
-    @IBAction func push(_ sender: Any) {
-        present(TemplateLoggerViewController(), animated: true, completion: nil)
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+
+        push(nil)
+    }
+
+    @IBAction func push(_ sender: Any?) {
+        let controller = TemplateLoggerViewController()
+        let navController = UINavigationController(rootViewController: controller)
+        present(navController, animated: true, completion: nil)
     }
 }
 

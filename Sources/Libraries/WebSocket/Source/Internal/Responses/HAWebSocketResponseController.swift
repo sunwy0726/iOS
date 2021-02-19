@@ -20,6 +20,10 @@ internal class HAWebSocketResponseController {
             delegate?.responseController(self, didTransitionTo: phase)
         }
     }
+
+    func didUpdate(to webSocket: WebSocket?) {
+        phase = .disconnected
+    }
 }
 
 extension HAWebSocketResponseController: Starscream.WebSocketDelegate {

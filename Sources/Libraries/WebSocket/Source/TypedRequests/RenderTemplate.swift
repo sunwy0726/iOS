@@ -26,12 +26,12 @@ public struct HAResponseRenderTemplate: HAWebSocketResponseDecodable {
         public var entities: [String]
         public var domains: [String]
 
-        public init(value: [String: Any]) {
+        public init(data: HAWebSocketData) throws {
             self.init(
-                all: value["all"] as? Bool ?? false,
-                time: value["time"] as? Bool ?? false,
-                entities: value["entities"] as? [String] ?? [],
-                domains: value["domains"] as? [String] ?? []
+                all: data.get("all", fallback: false),
+                time: data.get("time", fallback: false),
+                entities: data.get("entities", fallback: []),
+                domains: data.get("domains", fallback: [])
             )
         }
 
@@ -48,12 +48,10 @@ public struct HAResponseRenderTemplate: HAWebSocketResponseDecodable {
         }
     }
 
-    public init?(data: HAWebSocketData) {
-        guard let result = data["result"] else { return nil }
-
+    public init(data: HAWebSocketData) throws {
         self.init(
-            result: result,
-            listeners: Listeners(value: data["listeners"] as? [String: Any] ?? [:])
+            result: try data.get("result"),
+            listeners: try data.get("listeners", transform: Listeners.init(data:))
         )
     }
 

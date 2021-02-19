@@ -22,11 +22,21 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
     public var configuration: HAWebSocketConfiguration
 
     public var callbackQueue: DispatchQueue = .main
-    public var state: HAWebSocketState = .connecting
+    public var state: HAWebSocketState {
+        switch responseController.phase {
+        case .disconnected:
+            return .disconnected(reason: .initial)
+        case .auth:
+            return .connecting
+        case .command:
+            return .ready(version: "")
+        }
+    }
 
     private var connection: WebSocket? {
         didSet {
             connection?.delegate = responseController
+            responseController.didUpdate(to: connection)
         }
     }
     private let requestController = HAWebSocketRequestController()
@@ -89,10 +99,11 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
     ) -> HARequestToken {
         send(request.request) { result in
             completion(result.flatMap { data in
-                if let updated = T(data: data) {
+                do {
+                    let updated = try T(data: data)
                     return .success(updated)
-                } else {
-                    return .failure(.internal(debugDescription: "couldn't decode result from '\(data)'"))
+                } catch {
+                    return .failure(.internal(debugDescription: error.localizedDescription))
                 }
             })
         }
@@ -118,8 +129,11 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
         handler: @escaping (HARequestToken, T) -> Void
     ) -> HARequestToken {
         return commonSubscribe(to: request.request, initiated: initiated, handler: { token, data in
-            if let value = T(data: data) {
+            do {
+                let value = try T(data: data)
                 handler(token, value)
+            } catch {
+                HAWebSocketGlobalConfig.log("couldn't parse data \(error)")
             }
         })
     }
