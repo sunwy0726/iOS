@@ -3,10 +3,10 @@
 /// The root-level information in either the `result` for individual requests or `event` for subscriptions.
 public enum HAWebSocketData {
     /// A dictionary response.
-    /// - SeeAlso: `subscript(key:)`
+    /// - SeeAlso: `get(_:)`and associated methods
     case dictionary([String: Any])
     /// An array response.
-    case array([Any])
+    case array([HAWebSocketData])
     /// Any other response, including `null`
     case empty
 
@@ -98,13 +98,14 @@ public enum HAWebSocketData {
         if let value = value as? [String: Any] {
             self = .dictionary(value)
         } else if let value = value as? [Any] {
-            self = .array(value)
+            self = .array(value.map(Self.init(value:)))
         } else {
             self = .empty
         }
     }
 }
 
+/// Parse error
 public enum HAWebSocketDataError: Error {
     case missingKey(String)
     case incorrectType(key: String, expected: String, actual: String)

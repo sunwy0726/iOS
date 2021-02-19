@@ -52,7 +52,7 @@ internal enum HAWebSocketResponse {
             }
         case .event:
             let identifier = try parseIdentifier()
-            self = .event(identifier: identifier, data: HAWebSocketData(value: dictionary["event"]))
+            self = .event(identifier: identifier, data: .init(value: dictionary["event"]))
         case .authRequired:
             self = .auth(.required)
         case .authOK:
