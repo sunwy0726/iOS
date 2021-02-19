@@ -23,7 +23,7 @@ public struct HAWebSocketRequest {
     ///   - type: The type of the request to issue
     ///   - data: The data to accompany with the request, at the top level
     ///   - shouldRetry: Whether to retry the request when a connection change occurs
-    public init(type: HAWebSocketRequestType, data: [String : Any], shouldRetry: Bool = true) {
+    public init(type: HAWebSocketRequestType, data: [String: Any], shouldRetry: Bool = true) {
         self.type = type
         self.data = data
         self.shouldRetry = shouldRetry

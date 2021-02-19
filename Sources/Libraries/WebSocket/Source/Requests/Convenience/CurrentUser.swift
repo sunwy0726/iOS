@@ -1,6 +1,6 @@
 public extension HAWebSocketTypedRequest {
     static func currentUser() -> HAWebSocketTypedRequest<HAResponseCurrentUser> {
-        return .init(request: .init(type: .currentUser, data: [:]))
+        .init(request: .init(type: .currentUser, data: [:]))
     }
 }
 

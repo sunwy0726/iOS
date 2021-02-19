@@ -39,6 +39,7 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
             responseController.didUpdate(to: connection)
         }
     }
+
     private let requestController = HAWebSocketRequestController()
     private let responseController = HAWebSocketResponseController()
 
@@ -60,7 +61,7 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
             createdConnection = connection
         } else {
             createdConnection = WebSocket(request: request)
-            self.connection = createdConnection
+            connection = createdConnection
         }
 
         if createdConnection.request.url != request.url {
@@ -130,7 +131,7 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
         initiated: SubscriptionInitiatedHandler?,
         handler: @escaping (HARequestToken, T) -> Void
     ) -> HARequestToken {
-        return commonSubscribe(to: request.request, initiated: initiated, handler: { token, data in
+        commonSubscribe(to: request.request, initiated: initiated, handler: { token, data in
             do {
                 let value = try T(data: data)
                 handler(token, value)
@@ -191,14 +192,17 @@ extension HAWebSocketAPI {
 }
 
 extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
-    func responseController(_ responseController: HAWebSocketResponseController, didReceive response: HAWebSocketResponse) {
+    func responseController(
+        _ responseController: HAWebSocketResponseController,
+        didReceive response: HAWebSocketResponse
+    ) {
         switch response {
         case let .auth(authState):
             switch authState {
             case .required:
                 configuration.fetchAuthToken { [self] result in
                     switch result {
-                    case .success(let token):
+                    case let .success(token):
                         sendRaw([
                             "type": "auth",
                             "access_token": token,
@@ -210,7 +214,7 @@ extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
                                 disconnectTemporarily()
                             }
                         })
-                    case .failure(let error):
+                    case let .failure(error):
                         HAWebSocketGlobalConfig.log("delegate failed to provide access token, bailing")
                         disconnectTemporarily()
                     }
@@ -244,7 +248,10 @@ extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
         }
     }
 
-    func responseController(_ responseController: HAWebSocketResponseController, didTransitionTo phase: HAWebSocketResponseController.Phase) {
+    func responseController(
+        _ responseController: HAWebSocketResponseController,
+        didTransitionTo phase: HAWebSocketResponseController.Phase
+    ) {
         switch phase {
         case .disconnected: requestController.resetActive()
         case .auth: break
@@ -269,8 +276,7 @@ extension HAWebSocketAPI: HAWebSocketRequestControllerDelegate {
 
         print("sending \(data)")
 
-        sendRaw(data) { result in
-
+        sendRaw(data) { _ in
         }
     }
 }

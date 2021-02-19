@@ -1,7 +1,10 @@
 import Starscream
 
 internal protocol HAWebSocketResponseControllerDelegate: AnyObject {
-    func responseController(_ controller: HAWebSocketResponseController, didTransitionTo phase: HAWebSocketResponseController.Phase)
+    func responseController(
+        _ controller: HAWebSocketResponseController,
+        didTransitionTo phase: HAWebSocketResponseController.Phase
+    )
     func responseController(_ controller: HAWebSocketResponseController, didReceive response: HAWebSocketResponse)
 }
 

@@ -20,6 +20,7 @@ internal class HAWebSocketRequestController {
                 return .init(rawValue: lastIdentifierInteger)
             }
         }
+
         var identifierGenerator = IdentifierGenerator()
     }
 
@@ -66,7 +67,7 @@ internal class HAWebSocketRequestController {
 
         mutate(using: { state in
             state.pending.remove(request)
-            
+
             if let identifier = identifier {
                 state.active[identifier] = nil
             }

@@ -1,7 +1,7 @@
 public extension HAWebSocketTypedSubscription {
     static func stateChanged() -> HAWebSocketTypedSubscription<HAResponseEventStateChanged> {
-        return .init(request: .init(type: .subscribeEvents, data: [
-            "event_type": HAWebSocketEventType.stateChanged.rawValue!
+        .init(request: .init(type: .subscribeEvents, data: [
+            "event_type": HAWebSocketEventType.stateChanged.rawValue!,
         ]))
     }
 }
@@ -42,7 +42,7 @@ public struct HAResponseEntity {
     }
 }
 
-// todo: inheritence to HAResponseEvent?
+// TODO: inheritence to HAResponseEvent?
 public struct HAResponseEventStateChanged: HAWebSocketResponseDecodable {
     public var event: HAResponseEvent
     public var entityId: String

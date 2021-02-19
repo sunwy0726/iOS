@@ -19,7 +19,7 @@ public extension HAWebSocketTypedSubscription {
 public struct HAResponseRenderTemplate: HAWebSocketResponseDecodable {
     public var result: Any
     public var listeners: Listeners
-    
+
     public struct Listeners {
         public var all: Bool
         public var time: Bool

@@ -1,22 +1,15 @@
-//
-//  AppDelegate.swift
-//  HAWebSocket
-//
-//  Created by Zac West on 02/15/2021.
-//  Copyright (c) 2021 Zac West. All rights reserved.
-//
-
 import UIKit
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
-
     var window: UIWindow?
 
-
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+    func application(
+        _ application: UIApplication,
+        didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?
+    ) -> Bool {
         // Override point for customization after application launch.
-        return true
+        true
     }
 
     func applicationWillResignActive(_ application: UIApplication) {
@@ -40,7 +33,4 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func applicationWillTerminate(_ application: UIApplication) {
         // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
     }
-
-
 }
-

@@ -71,7 +71,7 @@ public enum HAWebSocket {
     /// - Parameter configuration: The configuration for the connection
     /// - Returns: The connection itself
     public static func api(configuration: HAWebSocketConfiguration) -> HAWebSocketProtocol {
-        Self.API.init(configuration: configuration)
+        Self.API(configuration: configuration)
     }
 }
 

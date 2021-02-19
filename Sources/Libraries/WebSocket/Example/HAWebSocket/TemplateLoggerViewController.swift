@@ -1,6 +1,6 @@
 import Foundation
-import UIKit
 import HAWebSocket
+import UIKit
 
 class TemplateLoggerViewController: UIViewController {
     let textView = UITextView()
@@ -24,7 +24,7 @@ class TemplateLoggerViewController: UIViewController {
         super.viewDidLoad()
 
         navigationItem.rightBarButtonItems = [
-            UIBarButtonItem(title: "Toggle", style: .plain, target: self, action: #selector(toggle))
+            UIBarButtonItem(title: "Toggle", style: .plain, target: self, action: #selector(toggle)),
         ]
 
         view.addSubview(textView)
@@ -36,7 +36,7 @@ class TemplateLoggerViewController: UIViewController {
 //        websocket.subscribe(to: .init(
 //            type: .renderTemplate,
 //            data: ["template": "{{ states.device_tracker | count }}"]
-////            data: ["template": "{{ now() }} {{ states('sun.sun') }} {{ states.device_tracker | count }}"]
+        ////            data: ["template": "{{ now() }} {{ states('sun.sun') }} {{ states.device_tracker | count }}"]
 //        ), handler: { [textView] token, data in
 //            if case let .dictionary(underlying) = data,
 //               let result = underlying["result"] {
@@ -47,7 +47,7 @@ class TemplateLoggerViewController: UIViewController {
         websocket.subscribe(
             to: .renderTemplate("{{ now() }} {{ states('sun.sun') }} {{ states.device_tracker | count }}"),
             initiated: { _ in },
-            handler: { [textView] token, response in
+            handler: { [textView] _, response in
                 textView.text = String(describing: response.result)
                 print(response)
 //                token.cancel()
@@ -56,9 +56,9 @@ class TemplateLoggerViewController: UIViewController {
 
         websocket.send(.currentUser()) { result in
             switch result {
-            case .success(let user):
+            case let .success(user):
                 print(user)
-            case .failure(let error):
+            case let .failure(error):
                 print(error)
             }
         }
@@ -67,19 +67,19 @@ class TemplateLoggerViewController: UIViewController {
             to: .events(.all),
             initiated: { result in
                 print(result)
-            }, handler: { token, event in
+            }, handler: { _, event in
                 print(event)
             }
         )
 
-        websocket.subscribe(to: .stateChanged(), handler: { token, event in
+        websocket.subscribe(to: .stateChanged(), handler: { _, event in
             print(event)
         })
 
 //        websocket.subscribe(to:  .init(
 //            type: .renderTemplate,
 //            data: ["template": "{{ states.device_tracker | count }}"]
-////            data: ["template": "{{ now() }} {{ states('sun.sun') }} {{ states.device_tracker | count }}"]
+        ////            data: ["template": "{{ now() }} {{ states('sun.sun') }} {{ states.device_tracker | count }}"]
 //        ), handler: { [textView] token, data in
 //            if case let .dictionary(underlying) = data,
 //               let result = underlying["result"] {
