@@ -30,14 +30,14 @@ internal enum HAWebSocketResponse {
 
     init(dictionary: [String: Any]) throws {
         guard let type = dictionary["type"] as? String else {
-            throw ParseError.unknownType(dictionary["type"])
+            throw ParseError.unknownType(dictionary["type"] ?? "(unknown)")
         }
 
         func parseIdentifier() throws -> HAWebSocketRequestIdentifier {
             if let value = (dictionary["id"] as? Int).flatMap(HAWebSocketRequestIdentifier.init(rawValue:)) {
                 return value
             } else {
-                throw ParseError.unknownId(dictionary["id"])
+                throw ParseError.unknownId(dictionary["id"] ?? "(unknown)")
             }
         }
 

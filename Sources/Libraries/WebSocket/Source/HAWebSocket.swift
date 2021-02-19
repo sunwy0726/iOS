@@ -217,7 +217,7 @@ public enum HAWebSocketError: Error {
         /// The message provided with the error
         public var message: String
 
-        init(_ errorValue: Any) {
+        init(_ errorValue: Any?) {
             if let error = errorValue as? [String: Any],
                let code = error["code"] as? Int,
                let message = error["message"] as? String {

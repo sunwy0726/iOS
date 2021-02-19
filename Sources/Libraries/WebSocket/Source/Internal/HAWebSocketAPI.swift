@@ -210,12 +210,12 @@ extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
                             switch result {
                             case .success: HAWebSocketGlobalConfig.log("auth token sent")
                             case let .failure(error):
-                                HAWebSocketGlobalConfig.log("couldn't send auth token, disconnecting")
+                                HAWebSocketGlobalConfig.log("couldn't send auth token \(error), disconnecting")
                                 disconnectTemporarily()
                             }
                         })
                     case let .failure(error):
-                        HAWebSocketGlobalConfig.log("delegate failed to provide access token, bailing")
+                        HAWebSocketGlobalConfig.log("delegate failed to provide access token \(error), bailing")
                         disconnectTemporarily()
                     }
                 }
