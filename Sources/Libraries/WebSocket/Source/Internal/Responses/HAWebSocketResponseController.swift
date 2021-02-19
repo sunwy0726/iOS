@@ -35,6 +35,7 @@ extension HAWebSocketResponseController: Starscream.WebSocketDelegate {
         case let .connected(headers):
             HAWebSocketGlobalConfig.log("connected with headers: \(headers)")
             phase = .auth
+            // TODO: tell our delegate to immediately send auth token
         case let .disconnected(reason, code):
             HAWebSocketGlobalConfig.log("disconnected: \(reason) with code: \(code)")
             phase = .disconnected
