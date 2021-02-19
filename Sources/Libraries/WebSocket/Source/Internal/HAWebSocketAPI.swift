@@ -25,10 +25,12 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
     public var state: HAWebSocketState {
         switch responseController.phase {
         case .disconnected:
+            // TODO: actual disconnection reason
             return .disconnected(reason: .initial)
         case .auth:
             return .connecting
         case .command:
+            // TODO: version from auth ok piped to here
             return .ready(version: "")
         }
     }
@@ -238,6 +240,9 @@ extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
                 callbackQueue.async {
                     request.resolve(result)
                 }
+
+                // TODO: remove request from active list now that it is done
+                // or trigger something to inform it we're done -- its completion block is reset so we know this already
             } else if let subscription = requestController.subscription(for: identifier) {
                 callbackQueue.async {
                     subscription.resolve(result)
