@@ -1,8 +1,6 @@
-import Starscream
+// NOTE: see HAWebSocket.swift for how to access these types
 
-public enum HAWebSocketGlobalConfig {
-    public static var log: (String) -> Void = { print($0) }
-}
+import Starscream
 
 internal class HARequestTokenImpl: HARequestToken {
     var handler: (() -> Void)?
@@ -41,8 +39,8 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
         }
     }
 
-    private let requestController = HAWebSocketRequestController()
-    private let responseController = HAWebSocketResponseController()
+    let requestController = HAWebSocketRequestController()
+    let responseController = HAWebSocketResponseController()
 
     required init(configuration: HAWebSocketConfiguration) {
         self.configuration = configuration
@@ -182,7 +180,7 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
 // MARK: -
 
 extension HAWebSocketAPI {
-    private func sendRaw(_ dictionary: [String: Any], completion: @escaping (Result<Void, HAWebSocketError>) -> Void) {
+    func sendRaw(_ dictionary: [String: Any], completion: @escaping (Result<Void, HAWebSocketError>) -> Void) {
         guard let connection = connection else {
             assertionFailure("cannot send commands without a connection")
             completion(.failure(.internal(debugDescription: "tried to send when not connected")))
@@ -196,103 +194,6 @@ extension HAWebSocketAPI {
             })
         } catch {
             completion(.failure(.internal(debugDescription: error.localizedDescription)))
-        }
-    }
-
-    private func sendAuthToken() {
-        configuration.fetchAuthToken { [self] result in
-            switch result {
-            case let .success(token):
-                sendRaw([
-                    "type": "auth",
-                    "access_token": token,
-                ], completion: { result in
-                    switch result {
-                    case .success: HAWebSocketGlobalConfig.log("auth token sent")
-                    case let .failure(error):
-                        HAWebSocketGlobalConfig.log("couldn't send auth token \(error), disconnecting")
-                        disconnectTemporarily()
-                    }
-                })
-            case let .failure(error):
-                HAWebSocketGlobalConfig.log("delegate failed to provide access token \(error), bailing")
-                disconnectTemporarily()
-            }
-        }
-    }
-}
-
-extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
-    func responseController(
-        _ responseController: HAWebSocketResponseController,
-        didReceive response: HAWebSocketResponse
-    ) {
-        switch response {
-        case .auth:
-            // we send auth token pre-emptively, so we don't need to care about the messages for auth
-            // note that we do watch for auth->command phase change so we can re-activate pending requests
-            break
-        case let .event(identifier: identifier, data: data):
-            if let subscription = requestController.subscription(for: identifier) {
-                callbackQueue.async { [self] in
-                    subscription.invoke(token: HARequestTokenImpl { [requestController] in
-                        requestController.cancel(subscription)
-                    }, event: data)
-                }
-            } else {
-                HAWebSocketGlobalConfig.log("unable to find registration for event identifier \(identifier)")
-                send(.unsubscribe(identifier), completion: { _ in })
-            }
-        case let .result(identifier: identifier, result: result):
-            if let request = requestController.single(for: identifier) {
-                callbackQueue.async {
-                    request.resolve(result)
-                }
-
-                requestController.clear(invocation: request)
-            } else if let subscription = requestController.subscription(for: identifier) {
-                callbackQueue.async {
-                    subscription.resolve(result)
-                }
-            } else {
-                HAWebSocketGlobalConfig.log("unable to find request for identifier \(identifier)")
-            }
-        }
-    }
-
-    func responseController(
-        _ responseController: HAWebSocketResponseController,
-        didTransitionTo phase: HAWebSocketResponseController.Phase
-    ) {
-        switch phase {
-        case .auth: sendAuthToken()
-        case .command: requestController.prepare()
-        case .disconnected: requestController.resetActive()
-        }
-    }
-}
-
-extension HAWebSocketAPI: HAWebSocketRequestControllerDelegate {
-    func requestControllerShouldSendRequests(_ requestController: HAWebSocketRequestController) -> Bool {
-        if case .command = responseController.phase {
-            return true
-        } else {
-            return false
-        }
-    }
-
-    func requestController(
-        _ requestController: HAWebSocketRequestController,
-        didPrepareRequest request: HAWebSocketRequest,
-        with identifier: HAWebSocketRequestIdentifier
-    ) {
-        var data = request.data
-        data["id"] = identifier.rawValue
-        data["type"] = request.type.rawValue
-
-        print("sending \(data)")
-
-        sendRaw(data) { _ in
         }
     }
 }
