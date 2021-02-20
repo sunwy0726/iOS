@@ -1,4 +1,4 @@
-/// The command to issue via the WebSocket
+/// The command to issue
 public struct HARequestType: RawRepresentable, Hashable {
     public var rawValue: String
     public init(rawValue: String) {

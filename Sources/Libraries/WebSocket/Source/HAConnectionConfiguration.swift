@@ -1,4 +1,4 @@
-/// Configuration of the WebSocket connection
+/// Configuration of the connection
 public struct HAConnectionConfiguration {
     /// Create a new configuration
     /// - Parameters:

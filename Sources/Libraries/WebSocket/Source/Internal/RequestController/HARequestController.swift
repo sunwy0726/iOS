@@ -132,7 +132,7 @@ internal class HARequestController {
     func prepare() {
         guard delegate?.requestControllerShouldSendRequests(self) == true else { return }
 
-        let queue = DispatchQueue(label: "websocket-request-controller-callback", target: .main)
+        let queue = DispatchQueue(label: "request-controller-callback", target: .main)
         queue.suspend()
 
         mutate(using: { state in
