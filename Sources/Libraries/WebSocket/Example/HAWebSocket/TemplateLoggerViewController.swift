@@ -4,7 +4,7 @@ import UIKit
 
 class TemplateLoggerViewController: UIViewController {
     let textView = UITextView()
-    let websocket = HAWebSocket.api(configuration: .init(
+    let websocket = HAConnection.api(configuration: .init(
         connectionInfo: {
             .init(url: URL(string: "http://127.0.0.1:8123/api/websocket")!)
         },
