@@ -1,26 +1,13 @@
-// NOTE: see HAWebSocket.swift for how to access these types
+// NOTE: see HAConnection.swift for how to access these types
 
 import Starscream
 
-internal class HARequestTokenImpl: HARequestToken {
-    var handler: (() -> Void)?
-
-    init(handler: @escaping () -> Void) {
-        self.handler = handler
-    }
-
-    func cancel() {
-        handler?()
-        handler = nil
-    }
-}
-
-internal class HAWebSocketAPI: HAWebSocketProtocol {
-    public weak var delegate: HAWebSocketDelegate?
-    public var configuration: HAWebSocketConfiguration
+internal class HAConnectionImpl: HAConnectionProtocol {
+    public weak var delegate: HAConnectionDelegate?
+    public var configuration: HAConnectionConfiguration
 
     public var callbackQueue: DispatchQueue = .main
-    public var state: HAWebSocketState {
+    public var state: HAConnectionState {
         switch responseController.phase {
         case .disconnected:
             // TODO: actual disconnection reason
@@ -39,10 +26,10 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
         }
     }
 
-    let requestController = HAWebSocketRequestController()
-    let responseController = HAWebSocketResponseController()
+    let requestController = HARequestController()
+    let responseController = HAResponseController()
 
-    required init(configuration: HAWebSocketConfiguration) {
+    required init(configuration: HAConnectionConfiguration) {
         self.configuration = configuration
         requestController.delegate = self
         responseController.delegate = self
@@ -86,21 +73,21 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
 
     @discardableResult
     public func send(
-        _ request: HAWebSocketRequest,
+        _ request: HARequest,
         completion: @escaping RequestCompletion
-    ) -> HARequestToken {
-        let invocation = HAWebSocketRequestInvocationSingle(request: request, completion: completion)
+    ) -> HACancellable {
+        let invocation = HARequestInvocationSingle(request: request, completion: completion)
         requestController.add(invocation)
-        return HARequestTokenImpl { [requestController] in
+        return HACancellableImpl { [requestController] in
             requestController.cancel(invocation)
         }
     }
 
     @discardableResult
     public func send<T>(
-        _ request: HAWebSocketTypedRequest<T>,
-        completion: @escaping (Result<T, HAWebSocketError>) -> Void
-    ) -> HARequestToken {
+        _ request: HATypedRequest<T>,
+        completion: @escaping (Result<T, HAError>) -> Void
+    ) -> HACancellable {
         send(request.request) { result in
             completion(result.flatMap { data in
                 do {
@@ -116,71 +103,71 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
     // MARK: Subscribing
 
     private func commonSubscribe(
-        to request: HAWebSocketRequest,
+        to request: HARequest,
         initiated: SubscriptionInitiatedHandler?,
         handler: @escaping SubscriptionHandler
-    ) -> HARequestToken {
-        let sub = HAWebSocketRequestInvocationSubscription(request: request, initiated: initiated, handler: handler)
+    ) -> HACancellable {
+        let sub = HARequestInvocationSubscription(request: request, initiated: initiated, handler: handler)
         requestController.add(sub)
-        return HARequestTokenImpl { [requestController] in
+        return HACancellableImpl { [requestController] in
             requestController.cancel(sub)
         }
     }
 
     private func commonSubscribe<T>(
-        to request: HAWebSocketTypedSubscription<T>,
+        to request: HATypedSubscription<T>,
         initiated: SubscriptionInitiatedHandler?,
-        handler: @escaping (HARequestToken, T) -> Void
-    ) -> HARequestToken {
+        handler: @escaping (HACancellable, T) -> Void
+    ) -> HACancellable {
         commonSubscribe(to: request.request, initiated: initiated, handler: { token, data in
             do {
                 let value = try T(data: data)
                 handler(token, value)
             } catch {
-                HAWebSocketGlobalConfig.log("couldn't parse data \(error)")
+                HAGlobal.log("couldn't parse data \(error)")
             }
         })
     }
 
     @discardableResult
     public func subscribe(
-        to request: HAWebSocketRequest,
+        to request: HARequest,
         handler: @escaping SubscriptionHandler
-    ) -> HARequestToken {
+    ) -> HACancellable {
         commonSubscribe(to: request, initiated: nil, handler: handler)
     }
 
     @discardableResult
     public func subscribe(
-        to request: HAWebSocketRequest,
+        to request: HARequest,
         initiated: @escaping SubscriptionInitiatedHandler,
         handler: @escaping SubscriptionHandler
-    ) -> HARequestToken {
+    ) -> HACancellable {
         commonSubscribe(to: request, initiated: initiated, handler: handler)
     }
 
     @discardableResult
     public func subscribe<T>(
-        to request: HAWebSocketTypedSubscription<T>,
-        handler: @escaping (HARequestToken, T) -> Void
-    ) -> HARequestToken {
+        to request: HATypedSubscription<T>,
+        handler: @escaping (HACancellable, T) -> Void
+    ) -> HACancellable {
         commonSubscribe(to: request, initiated: nil, handler: handler)
     }
 
     @discardableResult
     public func subscribe<T>(
-        to request: HAWebSocketTypedSubscription<T>,
+        to request: HATypedSubscription<T>,
         initiated: @escaping SubscriptionInitiatedHandler,
-        handler: @escaping (HARequestToken, T) -> Void
-    ) -> HARequestToken {
+        handler: @escaping (HACancellable, T) -> Void
+    ) -> HACancellable {
         commonSubscribe(to: request, initiated: initiated, handler: handler)
     }
 }
 
 // MARK: -
 
-extension HAWebSocketAPI {
-    func sendRaw(_ dictionary: [String: Any], completion: @escaping (Result<Void, HAWebSocketError>) -> Void) {
+extension HAConnectionImpl {
+    func sendRaw(_ dictionary: [String: Any], completion: @escaping (Result<Void, HAError>) -> Void) {
         guard let connection = connection else {
             assertionFailure("cannot send commands without a connection")
             completion(.failure(.internal(debugDescription: "tried to send when not connected")))

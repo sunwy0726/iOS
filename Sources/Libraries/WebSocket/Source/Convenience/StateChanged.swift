@@ -1,7 +1,7 @@
-public extension HAWebSocketTypedSubscription {
-    static func stateChanged() -> HAWebSocketTypedSubscription<HAResponseEventStateChanged> {
+public extension HATypedSubscription {
+    static func stateChanged() -> HATypedSubscription<HAResponseEventStateChanged> {
         .init(request: .init(type: .subscribeEvents, data: [
-            "event_type": HAWebSocketEventType.stateChanged.rawValue!,
+            "event_type": HAEventType.stateChanged.rawValue!,
         ]))
     }
 }
@@ -14,7 +14,7 @@ public struct HAResponseEntity {
     var attributes: [String: Any]
     var context: [String: Any] // todo as strongly typed
 
-    public init(data: HAWebSocketData) throws {
+    public init(data: HAData) throws {
         self.init(
             entityId: try data.decode("entity_id"),
             state: try data.decode("state"),
@@ -43,15 +43,15 @@ public struct HAResponseEntity {
 }
 
 // TODO: inheritence to HAResponseEvent?
-public struct HAResponseEventStateChanged: HAWebSocketDataDecodable {
+public struct HAResponseEventStateChanged: HADataDecodable {
     public var event: HAResponseEvent
     public var entityId: String
     public var oldState: HAResponseEntity?
     public var newState: HAResponseEntity?
 
-    public init(data: HAWebSocketData) throws {
+    public init(data: HAData) throws {
         let event = try HAResponseEvent(data: data)
-        let eventData = HAWebSocketData.dictionary(event.data)
+        let eventData = HAData.dictionary(event.data)
 
         self.init(
             event: event,

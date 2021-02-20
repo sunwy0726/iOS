@@ -1,24 +1,24 @@
-internal protocol HAWebSocketRequestControllerDelegate: AnyObject {
+internal protocol HARequestControllerDelegate: AnyObject {
     func requestControllerShouldSendRequests(
-        _ requestController: HAWebSocketRequestController
+        _ requestController: HARequestController
     ) -> Bool
     func requestController(
-        _ requestController: HAWebSocketRequestController,
-        didPrepareRequest request: HAWebSocketRequest,
-        with identifier: HAWebSocketRequestIdentifier
+        _ requestController: HARequestController,
+        didPrepareRequest request: HARequest,
+        with identifier: HARequestIdentifier
     )
 }
 
-internal class HAWebSocketRequestController {
+internal class HARequestController {
     private struct State {
         var identifierGenerator = IdentifierGenerator()
-        var pending: Set<HAWebSocketRequestInvocation> = Set()
-        var active: [HAWebSocketRequestIdentifier: HAWebSocketRequestInvocation] = [:]
+        var pending: Set<HARequestInvocation> = Set()
+        var active: [HARequestIdentifier: HARequestInvocation] = [:]
 
         struct IdentifierGenerator {
             private var lastIdentifierInteger = 0
 
-            mutating func next() -> HAWebSocketRequestIdentifier {
+            mutating func next() -> HARequestIdentifier {
                 lastIdentifierInteger += 1
                 return .init(rawValue: lastIdentifierInteger)
             }
@@ -30,7 +30,7 @@ internal class HAWebSocketRequestController {
         }
     }
 
-    weak var delegate: HAWebSocketRequestControllerDelegate?
+    weak var delegate: HARequestControllerDelegate?
 
     private var state: State = .init() {
         willSet {
@@ -38,7 +38,7 @@ internal class HAWebSocketRequestController {
         }
     }
 
-    private var stateQueue = DispatchQueue(label: "hawebsocket-request-state")
+    private var stateQueue = DispatchQueue(label: "request-controller-state")
 
     private func mutate(using handler: @escaping (inout State) -> Void, then perform: @escaping () -> Void = {}) {
         dispatchPrecondition(condition: .notOnQueue(stateQueue))
@@ -57,7 +57,7 @@ internal class HAWebSocketRequestController {
         }
     }
 
-    func add(_ invocation: HAWebSocketRequestInvocation) {
+    func add(_ invocation: HARequestInvocation) {
         mutate { state in
             state.pending.insert(invocation)
         }
@@ -65,7 +65,7 @@ internal class HAWebSocketRequestController {
         prepare()
     }
 
-    func cancel(_ request: HAWebSocketRequestInvocation) {
+    func cancel(_ request: HARequestInvocation) {
         // intentionally grabbed before entering the mutex
         let identifier = request.identifier
         let cancelRequest = request.cancelRequest()
@@ -79,7 +79,7 @@ internal class HAWebSocketRequestController {
             }
 
             if let cancelRequest = cancelRequest {
-                state.pending.insert(HAWebSocketRequestInvocationSingle(
+                state.pending.insert(HARequestInvocationSingle(
                     request: cancelRequest.request,
                     completion: { _ in }
                 ))
@@ -104,22 +104,22 @@ internal class HAWebSocketRequestController {
         }
     }
 
-    private func invocation(for identifier: HAWebSocketRequestIdentifier) -> HAWebSocketRequestInvocation? {
+    private func invocation(for identifier: HARequestIdentifier) -> HARequestInvocation? {
         read { state in
             state.active[identifier]
         }
     }
 
-    func single(for identifier: HAWebSocketRequestIdentifier) -> HAWebSocketRequestInvocationSingle? {
-        invocation(for: identifier) as? HAWebSocketRequestInvocationSingle
+    func single(for identifier: HARequestIdentifier) -> HARequestInvocationSingle? {
+        invocation(for: identifier) as? HARequestInvocationSingle
     }
 
-    func subscription(for identifier: HAWebSocketRequestIdentifier) -> HAWebSocketRequestInvocationSubscription? {
-        invocation(for: identifier) as? HAWebSocketRequestInvocationSubscription
+    func subscription(for identifier: HARequestIdentifier) -> HARequestInvocationSubscription? {
+        invocation(for: identifier) as? HARequestInvocationSubscription
     }
 
     // only single invocations can be cleared, as subscriptions need to be cancelled
-    func clear(invocation: HAWebSocketRequestInvocationSingle) {
+    func clear(invocation: HARequestInvocationSingle) {
         mutate { state in
             if let identifier = invocation.identifier {
                 state.active[identifier] = nil

@@ -1,13 +1,13 @@
-internal class HAWebSocketRequestInvocation: Equatable, Hashable {
+internal class HARequestInvocation: Equatable, Hashable {
     private let uniqueID = UUID()
-    let request: HAWebSocketRequest
-    var identifier: HAWebSocketRequestIdentifier?
+    let request: HARequest
+    var identifier: HARequestIdentifier?
 
-    init(request: HAWebSocketRequest) {
+    init(request: HARequest) {
         self.request = request
     }
 
-    static func == (lhs: HAWebSocketRequestInvocation, rhs: HAWebSocketRequestInvocation) -> Bool {
+    static func == (lhs: HARequestInvocation, rhs: HARequestInvocation) -> Bool {
         lhs.uniqueID == rhs.uniqueID
     }
 
@@ -20,7 +20,7 @@ internal class HAWebSocketRequestInvocation: Equatable, Hashable {
         identifier == nil
     }
 
-    func cancelRequest() -> HAWebSocketTypedRequest<HAResponseVoid>? {
+    func cancelRequest() -> HATypedRequest<HAResponseVoid>? {
         // most requests do not need another request to be sent to be cancelled
         nil
     }

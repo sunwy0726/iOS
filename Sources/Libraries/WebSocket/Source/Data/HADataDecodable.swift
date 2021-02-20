@@ -2,19 +2,19 @@
 ///
 /// - Note: This differs from `Decodable` intentionally; `Decodable` does not support `Any` types or JSON well when the
 ///         results are extremely dynamic. This limitation requires that we do it ourselves.
-public protocol HAWebSocketDataDecodable {
+public protocol HADataDecodable {
     // one day, if Decodable can handle 'Any' types well, this can be init(decoder:)
-    init(data: HAWebSocketData) throws
+    init(data: HAData) throws
 }
 
 /// Parse error
-public enum HAWebSocketDataError: Error {
+public enum HADataError: Error {
     case missingKey(String)
     case incorrectType(key: String, expected: String, actual: String)
     case couldntTransform(key: String)
 }
 
-public extension HAWebSocketData {
+public extension HAData {
     /// Convenience access to the dictionary case for a particular key, with an expected type
     ///
     /// - Parameter key: The key to look up in `dictionary` case
@@ -22,21 +22,21 @@ public extension HAWebSocketData {
     /// - Throws: If the key was not present in the dictionary or the type was not the expected type or convertable
     func decode<T>(_ key: String) throws -> T {
         guard case let .dictionary(dictionary) = self, let value = dictionary[key] else {
-            throw HAWebSocketDataError.missingKey(key)
+            throw HADataError.missingKey(key)
         }
 
         if let value = value as? T {
             return value
         }
 
-        if T.self == HAWebSocketData.self {
+        if T.self == HAData.self {
             // TODO: can i do this type-safe
-            return HAWebSocketData(value: value) as! T
+            return HAData(value: value) as! T
         }
 
-        if T.self == [HAWebSocketData].self, let value = value as? [Any] {
+        if T.self == [HAData].self, let value = value as? [Any] {
             // TODO: can i do this type-safe
-            return value.map(HAWebSocketData.init(value:)) as! T
+            return value.map(HAData.init(value:)) as! T
         }
 
         if T.self == Date.self, let value = value as? String, let date = Self.formatter.date(from: value) {
@@ -44,7 +44,7 @@ public extension HAWebSocketData {
             return date as! T
         }
 
-        throw HAWebSocketDataError.incorrectType(
+        throw HADataError.incorrectType(
             key: key,
             expected: String(describing: T.self),
             actual: String(describing: type(of: value))
@@ -61,7 +61,7 @@ public extension HAWebSocketData {
         if let transformed = try transform(base) {
             return transformed
         } else {
-            throw HAWebSocketDataError.couldntTransform(key: key)
+            throw HADataError.couldntTransform(key: key)
         }
     }
 

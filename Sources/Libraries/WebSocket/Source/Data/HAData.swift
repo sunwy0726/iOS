@@ -1,12 +1,12 @@
 /// Data from a response
 ///
 /// The root-level information in either the `result` for individual requests or `event` for subscriptions.
-public enum HAWebSocketData {
+public enum HAData {
     /// A dictionary response.
     /// - SeeAlso: `get(_:)`and associated methods
     case dictionary([String: Any])
     /// An array response.
-    case array([HAWebSocketData])
+    case array([HAData])
     /// Any other response, including `null`
     case empty
     

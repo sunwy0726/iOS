@@ -1,9 +1,9 @@
-public extension HAWebSocketTypedSubscription {
+public extension HATypedSubscription {
     static func renderTemplate(
         _ template: String,
         variables: [String: Any] = [:],
         timeout: Measurement<UnitDuration>? = nil
-    ) -> HAWebSocketTypedSubscription<HAResponseRenderTemplate> {
+    ) -> HATypedSubscription<HAResponseRenderTemplate> {
         var data: [String: Any] = [:]
         data["template"] = template
         data["variables"] = variables
@@ -16,7 +16,7 @@ public extension HAWebSocketTypedSubscription {
     }
 }
 
-public struct HAResponseRenderTemplate: HAWebSocketDataDecodable {
+public struct HAResponseRenderTemplate: HADataDecodable {
     public var result: Any
     public var listeners: Listeners
 
@@ -26,7 +26,7 @@ public struct HAResponseRenderTemplate: HAWebSocketDataDecodable {
         public var entities: [String]
         public var domains: [String]
 
-        public init(data: HAWebSocketData) throws {
+        public init(data: HAData) throws {
             self.init(
                 all: data.decode("all", fallback: false),
                 time: data.decode("time", fallback: false),
@@ -48,7 +48,7 @@ public struct HAResponseRenderTemplate: HAWebSocketDataDecodable {
         }
     }
 
-    public init(data: HAWebSocketData) throws {
+    public init(data: HAData) throws {
         self.init(
             result: try data.decode("result"),
             listeners: try data.decode("listeners", transform: Listeners.init(data:))

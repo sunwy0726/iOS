@@ -1,4 +1,4 @@
-extension HAWebSocketAPI {
+extension HAConnectionImpl {
     private func sendAuthToken() {
         configuration.fetchAuthToken { [self] result in
             switch result {
@@ -8,23 +8,23 @@ extension HAWebSocketAPI {
                     "access_token": token,
                 ], completion: { result in
                     switch result {
-                    case .success: HAWebSocketGlobalConfig.log("auth token sent")
+                    case .success: HAGlobal.log("auth token sent")
                     case let .failure(error):
-                        HAWebSocketGlobalConfig.log("couldn't send auth token \(error), disconnecting")
+                        HAGlobal.log("couldn't send auth token \(error), disconnecting")
                         disconnectTemporarily()
                     }
                 })
             case let .failure(error):
-                HAWebSocketGlobalConfig.log("delegate failed to provide access token \(error), bailing")
+                HAGlobal.log("delegate failed to provide access token \(error), bailing")
                 disconnectTemporarily()
             }
         }
     }
 }
 
-extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
+extension HAConnectionImpl: HAResponseControllerDelegate {
     func responseController(
-        _ responseController: HAWebSocketResponseController,
+        _ responseController: HAResponseController,
         didReceive response: HAWebSocketResponse
     ) {
         switch response {
@@ -35,12 +35,12 @@ extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
         case let .event(identifier: identifier, data: data):
             if let subscription = requestController.subscription(for: identifier) {
                 callbackQueue.async { [self] in
-                    subscription.invoke(token: HARequestTokenImpl { [requestController] in
+                    subscription.invoke(token: HACancellableImpl { [requestController] in
                         requestController.cancel(subscription)
                     }, event: data)
                 }
             } else {
-                HAWebSocketGlobalConfig.log("unable to find registration for event identifier \(identifier)")
+                HAGlobal.log("unable to find registration for event identifier \(identifier)")
                 send(.unsubscribe(identifier), completion: { _ in })
             }
         case let .result(identifier: identifier, result: result):
@@ -55,19 +55,21 @@ extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
                     subscription.resolve(result)
                 }
             } else {
-                HAWebSocketGlobalConfig.log("unable to find request for identifier \(identifier)")
+                HAGlobal.log("unable to find request for identifier \(identifier)")
             }
         }
     }
 
     func responseController(
-        _ responseController: HAWebSocketResponseController,
-        didTransitionTo phase: HAWebSocketResponseController.Phase
+        _ responseController: HAResponseController,
+        didTransitionTo phase: HAResponseController.Phase
     ) {
         switch phase {
         case .auth: sendAuthToken()
         case .command: requestController.prepare()
         case .disconnected: requestController.resetActive()
         }
+
+        delegate?.connection(self, transitionedTo: state)
     }
 }

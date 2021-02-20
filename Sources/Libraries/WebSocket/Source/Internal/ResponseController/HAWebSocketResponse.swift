@@ -13,8 +13,8 @@ internal enum HAWebSocketResponse {
         case invalid
     }
 
-    case result(identifier: HAWebSocketRequestIdentifier, result: Result<HAWebSocketData, HAWebSocketError>)
-    case event(identifier: HAWebSocketRequestIdentifier, data: HAWebSocketData)
+    case result(identifier: HARequestIdentifier, result: Result<HAData, HAError>)
+    case event(identifier: HARequestIdentifier, data: HAData)
     case auth(AuthState)
 
     enum ParseError: Error {
@@ -31,8 +31,8 @@ internal enum HAWebSocketResponse {
             throw ParseError.unknownType(dictionary["type"] ?? "(unknown)")
         }
 
-        func parseIdentifier() throws -> HAWebSocketRequestIdentifier {
-            if let value = (dictionary["id"] as? Int).flatMap(HAWebSocketRequestIdentifier.init(rawValue:)) {
+        func parseIdentifier() throws -> HARequestIdentifier {
+            if let value = (dictionary["id"] as? Int).flatMap(HARequestIdentifier.init(rawValue:)) {
                 return value
             } else {
                 throw ParseError.unknownId(dictionary["id"] ?? "(unknown)")

@@ -1,5 +1,5 @@
-extension HAWebSocketAPI: HAWebSocketRequestControllerDelegate {
-    func requestControllerShouldSendRequests(_ requestController: HAWebSocketRequestController) -> Bool {
+extension HAConnectionImpl: HARequestControllerDelegate {
+    func requestControllerShouldSendRequests(_ requestController: HARequestController) -> Bool {
         if case .command = responseController.phase {
             return true
         } else {
@@ -8,9 +8,9 @@ extension HAWebSocketAPI: HAWebSocketRequestControllerDelegate {
     }
 
     func requestController(
-        _ requestController: HAWebSocketRequestController,
-        didPrepareRequest request: HAWebSocketRequest,
-        with identifier: HAWebSocketRequestIdentifier
+        _ requestController: HARequestController,
+        didPrepareRequest request: HARequest,
+        with identifier: HARequestIdentifier
     ) {
         var data = request.data
         data["id"] = identifier.rawValue

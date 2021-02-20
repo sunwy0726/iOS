@@ -1,9 +1,9 @@
-internal class HAWebSocketRequestInvocationSingle: HAWebSocketRequestInvocation {
-    private var completion: HAWebSocketProtocol.RequestCompletion?
+internal class HARequestInvocationSingle: HARequestInvocation {
+    private var completion: HAConnectionProtocol.RequestCompletion?
 
     init(
-        request: HAWebSocketRequest,
-        completion: @escaping HAWebSocketProtocol.RequestCompletion
+        request: HARequest,
+        completion: @escaping HAConnectionProtocol.RequestCompletion
     ) {
         self.completion = completion
         super.init(request: request)
@@ -18,7 +18,7 @@ internal class HAWebSocketRequestInvocationSingle: HAWebSocketRequestInvocation 
         super.needsAssignment && completion != nil
     }
 
-    func resolve(_ result: Result<HAWebSocketData, HAWebSocketError>) {
+    func resolve(_ result: Result<HAData, HAError>) {
         // we need to make it impossible to call the completion handler more than once
         completion?(result)
         completion = nil

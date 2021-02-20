@@ -1,7 +1,7 @@
-public extension HAWebSocketTypedSubscription {
+public extension HATypedSubscription {
     static func events(
-        _ type: HAWebSocketEventType
-    ) -> HAWebSocketTypedSubscription<HAResponseEvent> {
+        _ type: HAEventType
+    ) -> HATypedSubscription<HAResponseEvent> {
         var data: [String: Any] = [:]
 
         if let rawType = type.rawValue {
@@ -12,10 +12,10 @@ public extension HAWebSocketTypedSubscription {
     }
 }
 
-internal extension HAWebSocketTypedRequest {
+internal extension HATypedRequest {
     static func unsubscribe(
-        _ identifier: HAWebSocketRequestIdentifier
-    ) -> HAWebSocketTypedRequest<HAResponseVoid> {
+        _ identifier: HARequestIdentifier
+    ) -> HATypedRequest<HAResponseVoid> {
         return .init(request: .init(
             type: .unsubscribeEvents,
             data: ["subscription": identifier.rawValue],
@@ -24,7 +24,7 @@ internal extension HAWebSocketTypedRequest {
     }
 }
 
-public struct HAWebSocketEventType: RawRepresentable, Hashable {
+public struct HAEventType: RawRepresentable, Hashable {
     public var rawValue: String?
     public init(rawValue: String?) {
         self.rawValue = rawValue
@@ -51,8 +51,8 @@ public struct HAWebSocketEventType: RawRepresentable, Hashable {
     public static var timerOutOfSync: Self = .init(rawValue: "timer_out_of_sync")
 }
 
-public struct HAResponseEvent: HAWebSocketDataDecodable {
-    public var type: HAWebSocketEventType
+public struct HAResponseEvent: HADataDecodable {
+    public var type: HAEventType
     public var timeFired: Date
     public var data: [String: Any]
     public var origin: Origin
@@ -68,7 +68,7 @@ public struct HAResponseEvent: HAWebSocketDataDecodable {
         public var userId: String?
         public var parentId: String?
 
-        public init(data: HAWebSocketData) throws {
+        public init(data: HAData) throws {
             self.init(
                 id: try data.decode("id"),
                 userId: data.decode("user_id", fallback: nil),
@@ -87,7 +87,7 @@ public struct HAResponseEvent: HAWebSocketDataDecodable {
         }
     }
 
-    public init(data: HAWebSocketData) throws {
+    public init(data: HAData) throws {
         self.type = .init(rawValue: try data.decode("event_type"))
         self.timeFired = try data.decode("time_fired")
         self.data = data.decode("data", fallback: [:])
@@ -96,7 +96,7 @@ public struct HAResponseEvent: HAWebSocketDataDecodable {
     }
 
     public init(
-        type: HAWebSocketEventType,
+        type: HAEventType,
         timeFired: Date,
         data: [String: Any],
         origin: Origin,

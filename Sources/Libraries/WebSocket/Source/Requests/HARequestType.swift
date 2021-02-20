@@ -1,5 +1,5 @@
 /// The command to issue via the WebSocket
-public struct HAWebSocketRequestType: RawRepresentable, Hashable {
+public struct HARequestType: RawRepresentable, Hashable {
     public var rawValue: String
     public init(rawValue: String) {
         self.rawValue = rawValue

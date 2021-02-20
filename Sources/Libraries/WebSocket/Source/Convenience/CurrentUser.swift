@@ -1,10 +1,10 @@
-public extension HAWebSocketTypedRequest {
-    static func currentUser() -> HAWebSocketTypedRequest<HAResponseCurrentUser> {
+public extension HATypedRequest {
+    static func currentUser() -> HATypedRequest<HAResponseCurrentUser> {
         .init(request: .init(type: .currentUser, data: [:]))
     }
 }
 
-public struct HAResponseCurrentUser: HAWebSocketDataDecodable {
+public struct HAResponseCurrentUser: HADataDecodable {
     public var id: String
     public var name: String?
     public var isOwner: Bool
@@ -16,7 +16,7 @@ public struct HAResponseCurrentUser: HAWebSocketDataDecodable {
         public var type: String
         public var id: String?
 
-        public init(data: HAWebSocketData) throws {
+        public init(data: HAData) throws {
             self.init(
                 type: try data.decode("auth_provider_type"),
                 id: data.decode("auth_provider_id", fallback: nil)
@@ -34,7 +34,7 @@ public struct HAResponseCurrentUser: HAWebSocketDataDecodable {
         public var name: String
         public var isEnabled: Bool
 
-        public init(data: HAWebSocketData) throws {
+        public init(data: HAData) throws {
             self.init(
                 id: try data.decode("id"),
                 name: try data.decode("name"),
@@ -49,7 +49,7 @@ public struct HAResponseCurrentUser: HAWebSocketDataDecodable {
         }
     }
 
-    public init(data: HAWebSocketData) throws {
+    public init(data: HAData) throws {
         self.init(
             id: try data.decode("id"),
             name: data.decode("name", fallback: nil),
