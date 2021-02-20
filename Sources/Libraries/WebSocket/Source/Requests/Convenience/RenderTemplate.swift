@@ -16,7 +16,7 @@ public extension HAWebSocketTypedSubscription {
     }
 }
 
-public struct HAResponseRenderTemplate: HAWebSocketResponseDecodable {
+public struct HAResponseRenderTemplate: HAWebSocketDataDecodable {
     public var result: Any
     public var listeners: Listeners
 
@@ -28,10 +28,10 @@ public struct HAResponseRenderTemplate: HAWebSocketResponseDecodable {
 
         public init(data: HAWebSocketData) throws {
             self.init(
-                all: data.get("all", fallback: false),
-                time: data.get("time", fallback: false),
-                entities: data.get("entities", fallback: []),
-                domains: data.get("domains", fallback: [])
+                all: data.decode("all", fallback: false),
+                time: data.decode("time", fallback: false),
+                entities: data.decode("entities", fallback: []),
+                domains: data.decode("domains", fallback: [])
             )
         }
 
@@ -50,8 +50,8 @@ public struct HAResponseRenderTemplate: HAWebSocketResponseDecodable {
 
     public init(data: HAWebSocketData) throws {
         self.init(
-            result: try data.get("result"),
-            listeners: try data.get("listeners", transform: Listeners.init(data:))
+            result: try data.decode("result"),
+            listeners: try data.decode("listeners", transform: Listeners.init(data:))
         )
     }
 

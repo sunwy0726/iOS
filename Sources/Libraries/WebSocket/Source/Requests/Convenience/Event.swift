@@ -12,6 +12,18 @@ public extension HAWebSocketTypedSubscription {
     }
 }
 
+internal extension HAWebSocketTypedRequest {
+    static func unsubscribe(
+        _ identifier: HAWebSocketRequestIdentifier
+    ) -> HAWebSocketTypedRequest<HAResponseVoid> {
+        return .init(request: .init(
+            type: .unsubscribeEvents,
+            data: ["subscription": identifier.rawValue],
+            shouldRetry: false
+        ))
+    }
+}
+
 public struct HAWebSocketEventType: RawRepresentable, Hashable {
     public var rawValue: String?
     public init(rawValue: String?) {
@@ -39,7 +51,7 @@ public struct HAWebSocketEventType: RawRepresentable, Hashable {
     public static var timerOutOfSync: Self = .init(rawValue: "timer_out_of_sync")
 }
 
-public struct HAResponseEvent: HAWebSocketResponseDecodable {
+public struct HAResponseEvent: HAWebSocketDataDecodable {
     public var type: HAWebSocketEventType
     public var timeFired: Date
     public var data: [String: Any]
@@ -58,9 +70,9 @@ public struct HAResponseEvent: HAWebSocketResponseDecodable {
 
         public init(data: HAWebSocketData) throws {
             self.init(
-                id: try data.get("id"),
-                userId: data.get("user_id", fallback: nil),
-                parentId: data.get("parent_id", fallback: nil)
+                id: try data.decode("id"),
+                userId: data.decode("user_id", fallback: nil),
+                parentId: data.decode("parent_id", fallback: nil)
             )
         }
 
@@ -76,11 +88,11 @@ public struct HAResponseEvent: HAWebSocketResponseDecodable {
     }
 
     public init(data: HAWebSocketData) throws {
-        self.type = .init(rawValue: try data.get("event_type"))
-        self.timeFired = try data.getDate("time_fired")
-        self.data = data.get("data", fallback: [:])
-        self.origin = try data.get("origin", transform: Origin.init(rawValue:))
-        self.context = try data.get("context", transform: Context.init(data:))
+        self.type = .init(rawValue: try data.decode("event_type"))
+        self.timeFired = try data.decode("time_fired")
+        self.data = data.decode("data", fallback: [:])
+        self.origin = try data.decode("origin", transform: Origin.init(rawValue:))
+        self.context = try data.decode("context", transform: Context.init(data:))
     }
 
     public init(

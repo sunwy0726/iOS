@@ -1,5 +1,7 @@
 internal protocol HAWebSocketRequestControllerDelegate: AnyObject {
-    func requestControllerShouldSendRequests(_ requestController: HAWebSocketRequestController) -> Bool
+    func requestControllerShouldSendRequests(
+        _ requestController: HAWebSocketRequestController
+    ) -> Bool
     func requestController(
         _ requestController: HAWebSocketRequestController,
         didPrepareRequest request: HAWebSocketRequest,
@@ -9,6 +11,7 @@ internal protocol HAWebSocketRequestControllerDelegate: AnyObject {
 
 internal class HAWebSocketRequestController {
     private struct State {
+        var identifierGenerator = IdentifierGenerator()
         var pending: Set<HAWebSocketRequestInvocation> = Set()
         var active: [HAWebSocketRequestIdentifier: HAWebSocketRequestInvocation] = [:]
 
@@ -19,9 +22,12 @@ internal class HAWebSocketRequestController {
                 lastIdentifierInteger += 1
                 return .init(rawValue: lastIdentifierInteger)
             }
-        }
 
-        var identifierGenerator = IdentifierGenerator()
+            mutating func reset() {
+                // we don't actually change the identifier
+                // by not reusing ids -- even across connections -- we can reduce bugs
+            }
+        }
     }
 
     weak var delegate: HAWebSocketRequestControllerDelegate?
@@ -62,7 +68,7 @@ internal class HAWebSocketRequestController {
     func cancel(_ request: HAWebSocketRequestInvocation) {
         // intentionally grabbed before entering the mutex
         let identifier = request.identifier
-        let cancelInvocation = request.cancelInvocation()
+        let cancelRequest = request.cancelRequest()
         request.cancel()
 
         mutate(using: { state in
@@ -72,8 +78,11 @@ internal class HAWebSocketRequestController {
                 state.active[identifier] = nil
             }
 
-            if let cancelInvocation = cancelInvocation {
-                state.pending.insert(cancelInvocation)
+            if let cancelRequest = cancelRequest {
+                state.pending.insert(HAWebSocketRequestInvocationSingle(
+                    request: cancelRequest.request,
+                    completion: { _ in }
+                ))
             }
         }, then: { [self] in
             prepare()
@@ -91,14 +100,13 @@ internal class HAWebSocketRequestController {
             }
 
             state.active.removeAll()
-
-            // TODO: reset id?
+            state.identifierGenerator.reset()
         }
     }
 
     private func invocation(for identifier: HAWebSocketRequestIdentifier) -> HAWebSocketRequestInvocation? {
         read { state in
-            state.pending.first(where: { $0.identifier == identifier })
+            state.active[identifier]
         }
     }
 
@@ -108,6 +116,17 @@ internal class HAWebSocketRequestController {
 
     func subscription(for identifier: HAWebSocketRequestIdentifier) -> HAWebSocketRequestInvocationSubscription? {
         invocation(for: identifier) as? HAWebSocketRequestInvocationSubscription
+    }
+
+    // only single invocations can be cleared, as subscriptions need to be cancelled
+    func clear(invocation: HAWebSocketRequestInvocationSingle) {
+        mutate { state in
+            if let identifier = invocation.identifier {
+                state.active[identifier] = nil
+            }
+            
+            state.pending.remove(invocation)
+        }
     }
 
     func prepare() {

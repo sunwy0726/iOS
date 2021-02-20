@@ -1,7 +1,3 @@
-internal struct HAWebSocketRequestIdentifier: RawRepresentable, Hashable {
-    let rawValue: Int
-}
-
 internal class HAWebSocketRequestInvocation: Equatable, Hashable {
     private let uniqueID = UUID()
     let request: HAWebSocketRequest
@@ -24,84 +20,12 @@ internal class HAWebSocketRequestInvocation: Equatable, Hashable {
         identifier == nil
     }
 
-    func cancelInvocation() -> HAWebSocketRequestInvocation? {
+    func cancelRequest() -> HAWebSocketTypedRequest<HAResponseVoid>? {
         // most requests do not need another request to be sent to be cancelled
         nil
     }
 
     func cancel() {
         // for subclasses
-    }
-}
-
-internal class HAWebSocketRequestInvocationSingle: HAWebSocketRequestInvocation {
-    private var completion: HAWebSocketProtocol.RequestCompletion?
-
-    init(
-        request: HAWebSocketRequest,
-        completion: @escaping HAWebSocketProtocol.RequestCompletion
-    ) {
-        self.completion = completion
-        super.init(request: request)
-    }
-
-    override func cancel() {
-        super.cancel()
-        completion = nil
-    }
-
-    override var needsAssignment: Bool {
-        super.needsAssignment && completion != nil
-    }
-
-    func resolve(_ result: Result<HAWebSocketData, HAWebSocketError>) {
-        // we need to make it impossible to call the completion handler more than once
-        completion?(result)
-        completion = nil
-    }
-}
-
-internal class HAWebSocketRequestInvocationSubscription: HAWebSocketRequestInvocation {
-    private var handler: HAWebSocketProtocol.SubscriptionHandler?
-    private var initiated: HAWebSocketProtocol.SubscriptionInitiatedHandler?
-
-    init(
-        request: HAWebSocketRequest,
-        initiated: HAWebSocketProtocol.SubscriptionInitiatedHandler?,
-        handler: @escaping HAWebSocketProtocol.SubscriptionHandler
-    ) {
-        self.initiated = initiated
-        self.handler = handler
-        super.init(request: request)
-    }
-
-    override func cancel() {
-        super.cancel()
-        handler = nil
-        initiated = nil
-    }
-
-    override var needsAssignment: Bool {
-        super.needsAssignment && handler != nil
-    }
-
-    override func cancelInvocation() -> HAWebSocketRequestInvocation? {
-        if let identifier = identifier {
-            return HAWebSocketRequestInvocationSingle(request: .init(
-                type: .unsubscribeEvents,
-                data: ["subscription": identifier.rawValue],
-                shouldRetry: false
-            ), completion: { _ in })
-        } else {
-            return nil
-        }
-    }
-
-    func resolve(_ result: Result<HAWebSocketData, HAWebSocketError>) {
-        initiated?(result)
-    }
-
-    func invoke(token: HARequestTokenImpl, event: HAWebSocketData) {
-        handler?(token, event)
     }
 }

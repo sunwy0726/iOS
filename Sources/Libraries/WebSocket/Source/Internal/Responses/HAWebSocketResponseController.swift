@@ -5,16 +5,19 @@ internal protocol HAWebSocketResponseControllerDelegate: AnyObject {
         _ controller: HAWebSocketResponseController,
         didTransitionTo phase: HAWebSocketResponseController.Phase
     )
-    func responseController(_ controller: HAWebSocketResponseController, didReceive response: HAWebSocketResponse)
+    func responseController(
+        _ controller: HAWebSocketResponseController,
+        didReceive response: HAWebSocketResponse
+    )
 }
 
 internal class HAWebSocketResponseController {
     weak var delegate: HAWebSocketResponseControllerDelegate?
 
     enum Phase {
-        case disconnected
         case auth
-        case command
+        case command(version: String)
+        case disconnected
     }
 
     var phase: Phase = .disconnected {
@@ -35,7 +38,6 @@ extension HAWebSocketResponseController: Starscream.WebSocketDelegate {
         case let .connected(headers):
             HAWebSocketGlobalConfig.log("connected with headers: \(headers)")
             phase = .auth
-            // TODO: tell our delegate to immediately send auth token
         case let .disconnected(reason, code):
             HAWebSocketGlobalConfig.log("disconnected: \(reason) with code: \(code)")
             phase = .disconnected
@@ -46,8 +48,8 @@ extension HAWebSocketResponseController: Starscream.WebSocketDelegate {
                    let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
                     let response = try HAWebSocketResponse(dictionary: json)
 
-                    if case .auth(.ok) = response {
-                        phase = .command
+                    if case let .auth(.ok(version)) = response {
+                        phase = .command(version: version)
                     }
 
                     delegate?.responseController(self, didReceive: response)

@@ -1,5 +1,3 @@
-import Foundation
-
 internal enum HAWebSocketResponse {
     enum ResponseType: String {
         case result = "result"
@@ -11,7 +9,7 @@ internal enum HAWebSocketResponse {
 
     enum AuthState {
         case required
-        case ok
+        case ok(version: String)
         case invalid
     }
 
@@ -56,7 +54,7 @@ internal enum HAWebSocketResponse {
         case .authRequired:
             self = .auth(.required)
         case .authOK:
-            self = .auth(.ok)
+            self = .auth(.ok(version: dictionary["ha_version"] as? String ?? "unknown"))
         case .authInvalid:
             self = .auth(.invalid)
         case .none:

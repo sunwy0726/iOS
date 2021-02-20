@@ -4,7 +4,7 @@ public extension HAWebSocketTypedRequest {
     }
 }
 
-public struct HAResponseCurrentUser: HAWebSocketResponseDecodable {
+public struct HAResponseCurrentUser: HAWebSocketDataDecodable {
     public var id: String
     public var name: String?
     public var isOwner: Bool
@@ -18,8 +18,8 @@ public struct HAResponseCurrentUser: HAWebSocketResponseDecodable {
 
         public init(data: HAWebSocketData) throws {
             self.init(
-                type: try data.get("auth_provider_type"),
-                id: data.get("auth_provider_id", fallback: nil)
+                type: try data.decode("auth_provider_type"),
+                id: data.decode("auth_provider_id", fallback: nil)
             )
         }
 
@@ -36,9 +36,9 @@ public struct HAResponseCurrentUser: HAWebSocketResponseDecodable {
 
         public init(data: HAWebSocketData) throws {
             self.init(
-                id: try data.get("id"),
-                name: try data.get("name"),
-                isEnabled: try data.get("enabled")
+                id: try data.decode("id"),
+                name: try data.decode("name"),
+                isEnabled: try data.decode("enabled")
             )
         }
 
@@ -51,12 +51,12 @@ public struct HAResponseCurrentUser: HAWebSocketResponseDecodable {
 
     public init(data: HAWebSocketData) throws {
         self.init(
-            id: try data.get("id"),
-            name: data.get("name", fallback: nil),
-            isOwner: data.get("is_owner", fallback: false),
-            isAdmin: data.get("is_admin", fallback: false),
-            credentials: try data.get("credentials", fallback: []).compactMap(Credential.init(data:)),
-            mfaModules: try data.get("mfa_modules", fallback: []).compactMap(MFAModule.init(data:))
+            id: try data.decode("id"),
+            name: data.decode("name", fallback: nil),
+            isOwner: data.decode("is_owner", fallback: false),
+            isAdmin: data.decode("is_admin", fallback: false),
+            credentials: try data.decode("credentials", fallback: []).compactMap(Credential.init(data:)),
+            mfaModules: try data.decode("mfa_modules", fallback: []).compactMap(MFAModule.init(data:))
         )
     }
 

@@ -4,7 +4,7 @@ public enum HAWebSocketGlobalConfig {
     public static var log: (String) -> Void = { print($0) }
 }
 
-class HARequestTokenImpl: HARequestToken {
+internal class HARequestTokenImpl: HARequestToken {
     var handler: (() -> Void)?
 
     init(handler: @escaping () -> Void) {
@@ -29,9 +29,8 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
             return .disconnected(reason: .initial)
         case .auth:
             return .connecting
-        case .command:
-            // TODO: version from auth ok piped to here
-            return .ready(version: "")
+        case let .command(version):
+            return .ready(version: version)
         }
     }
 
@@ -87,6 +86,7 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
 
     // MARK: - Sending
 
+    @discardableResult
     public func send(
         _ request: HAWebSocketRequest,
         completion: @escaping RequestCompletion
@@ -98,6 +98,7 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
         }
     }
 
+    @discardableResult
     public func send<T>(
         _ request: HAWebSocketTypedRequest<T>,
         completion: @escaping (Result<T, HAWebSocketError>) -> Void
@@ -143,6 +144,7 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
         })
     }
 
+    @discardableResult
     public func subscribe(
         to request: HAWebSocketRequest,
         handler: @escaping SubscriptionHandler
@@ -150,6 +152,7 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
         commonSubscribe(to: request, initiated: nil, handler: handler)
     }
 
+    @discardableResult
     public func subscribe(
         to request: HAWebSocketRequest,
         initiated: @escaping SubscriptionInitiatedHandler,
@@ -158,6 +161,7 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
         commonSubscribe(to: request, initiated: initiated, handler: handler)
     }
 
+    @discardableResult
     public func subscribe<T>(
         to request: HAWebSocketTypedSubscription<T>,
         handler: @escaping (HARequestToken, T) -> Void
@@ -165,6 +169,7 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
         commonSubscribe(to: request, initiated: nil, handler: handler)
     }
 
+    @discardableResult
     public func subscribe<T>(
         to request: HAWebSocketTypedSubscription<T>,
         initiated: @escaping SubscriptionInitiatedHandler,
@@ -191,6 +196,28 @@ extension HAWebSocketAPI {
             completion(.failure(.internal(debugDescription: error.localizedDescription)))
         }
     }
+
+    private func sendAuthToken() {
+        configuration.fetchAuthToken { [self] result in
+            switch result {
+            case let .success(token):
+                sendRaw([
+                    "type": "auth",
+                    "access_token": token,
+                ], completion: { result in
+                    switch result {
+                    case .success: HAWebSocketGlobalConfig.log("auth token sent")
+                    case let .failure(error):
+                        HAWebSocketGlobalConfig.log("couldn't send auth token \(error), disconnecting")
+                        disconnectTemporarily()
+                    }
+                })
+            case let .failure(error):
+                HAWebSocketGlobalConfig.log("delegate failed to provide access token \(error), bailing")
+                disconnectTemporarily()
+            }
+        }
+    }
 }
 
 extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
@@ -199,31 +226,10 @@ extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
         didReceive response: HAWebSocketResponse
     ) {
         switch response {
-        case let .auth(authState):
-            switch authState {
-            case .required:
-                configuration.fetchAuthToken { [self] result in
-                    switch result {
-                    case let .success(token):
-                        sendRaw([
-                            "type": "auth",
-                            "access_token": token,
-                        ], completion: { result in
-                            switch result {
-                            case .success: HAWebSocketGlobalConfig.log("auth token sent")
-                            case let .failure(error):
-                                HAWebSocketGlobalConfig.log("couldn't send auth token \(error), disconnecting")
-                                disconnectTemporarily()
-                            }
-                        })
-                    case let .failure(error):
-                        HAWebSocketGlobalConfig.log("delegate failed to provide access token \(error), bailing")
-                        disconnectTemporarily()
-                    }
-                }
-            case .invalid: break
-            case .ok: break
-            }
+        case .auth:
+            // we send auth token pre-emptively, so we don't need to care about the messages for auth
+            // note that we do watch for auth->command phase change so we can re-activate pending requests
+            break
         case let .event(identifier: identifier, data: data):
             if let subscription = requestController.subscription(for: identifier) {
                 callbackQueue.async { [self] in
@@ -233,7 +239,7 @@ extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
                 }
             } else {
                 HAWebSocketGlobalConfig.log("unable to find registration for event identifier \(identifier)")
-                // TODO: send unsubscribe
+                send(.unsubscribe(identifier), completion: { _ in })
             }
         case let .result(identifier: identifier, result: result):
             if let request = requestController.single(for: identifier) {
@@ -241,8 +247,7 @@ extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
                     request.resolve(result)
                 }
 
-                // TODO: remove request from active list now that it is done
-                // or trigger something to inform it we're done -- its completion block is reset so we know this already
+                requestController.clear(invocation: request)
             } else if let subscription = requestController.subscription(for: identifier) {
                 callbackQueue.async {
                     subscription.resolve(result)
@@ -258,16 +263,20 @@ extension HAWebSocketAPI: HAWebSocketResponseControllerDelegate {
         didTransitionTo phase: HAWebSocketResponseController.Phase
     ) {
         switch phase {
-        case .disconnected: requestController.resetActive()
-        case .auth: break
+        case .auth: sendAuthToken()
         case .command: requestController.prepare()
+        case .disconnected: requestController.resetActive()
         }
     }
 }
 
 extension HAWebSocketAPI: HAWebSocketRequestControllerDelegate {
     func requestControllerShouldSendRequests(_ requestController: HAWebSocketRequestController) -> Bool {
-        responseController.phase == .command
+        if case .command = responseController.phase {
+            return true
+        } else {
+            return false
+        }
     }
 
     func requestController(

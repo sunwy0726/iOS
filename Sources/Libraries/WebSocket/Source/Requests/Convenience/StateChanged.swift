@@ -16,12 +16,12 @@ public struct HAResponseEntity {
 
     public init(data: HAWebSocketData) throws {
         self.init(
-            entityId: try data.get("entity_id"),
-            state: try data.get("state"),
-            lastChanged: try data.getDate("last_changed"),
-            lastUpdated: try data.getDate("last_updated"),
-            attributes: try data.get("attributes"),
-            context: try data.get("context")
+            entityId: try data.decode("entity_id"),
+            state: try data.decode("state"),
+            lastChanged: try data.decode("last_changed"),
+            lastUpdated: try data.decode("last_updated"),
+            attributes: try data.decode("attributes"),
+            context: try data.decode("context")
         )
     }
 
@@ -43,7 +43,7 @@ public struct HAResponseEntity {
 }
 
 // TODO: inheritence to HAResponseEvent?
-public struct HAResponseEventStateChanged: HAWebSocketResponseDecodable {
+public struct HAResponseEventStateChanged: HAWebSocketDataDecodable {
     public var event: HAResponseEvent
     public var entityId: String
     public var oldState: HAResponseEntity?
@@ -55,9 +55,9 @@ public struct HAResponseEventStateChanged: HAWebSocketResponseDecodable {
 
         self.init(
             event: event,
-            entityId: try eventData.get("entity_id"),
-            oldState: try? eventData.get("old_state", transform: HAResponseEntity.init(data:)),
-            newState: try? eventData.get("new_state", transform: HAResponseEntity.init(data:))
+            entityId: try eventData.decode("entity_id"),
+            oldState: try? eventData.decode("old_state", transform: HAResponseEntity.init(data:)),
+            newState: try? eventData.decode("new_state", transform: HAResponseEntity.init(data:))
         )
     }
 
