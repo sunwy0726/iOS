@@ -1,4 +1,9 @@
 public extension HATypedSubscription {
+    /// Listen for state changes of all entities
+    ///
+    /// This is a convenient version of listening to the `.stateChanged` event, but with parsed response values.
+    ///
+    /// - Returns: A typed subscriptions that can be sent via `HAConnectionProtocol`
     static func stateChanged() -> HATypedSubscription<HAResponseEventStateChanged> {
         .init(request: .init(type: .subscribeEvents, data: [
             "event_type": HAEventType.stateChanged.rawValue!,
@@ -6,48 +11,18 @@ public extension HATypedSubscription {
     }
 }
 
-public struct HAResponseEntity {
-    var entityId: String
-    var state: String
-    var lastChanged: Date
-    var lastUpdated: Date
-    var attributes: [String: Any]
-    var context: [String: Any] // todo as strongly typed
-
-    public init(data: HAData) throws {
-        self.init(
-            entityId: try data.decode("entity_id"),
-            state: try data.decode("state"),
-            lastChanged: try data.decode("last_changed"),
-            lastUpdated: try data.decode("last_updated"),
-            attributes: try data.decode("attributes"),
-            context: try data.decode("context")
-        )
-    }
-
-    public init(
-        entityId: String,
-        state: String,
-        lastChanged: Date,
-        lastUpdated: Date,
-        attributes: [String: Any],
-        context: [String: Any]
-    ) {
-        self.entityId = entityId
-        self.state = state
-        self.lastChanged = lastChanged
-        self.lastUpdated = lastUpdated
-        self.attributes = attributes
-        self.context = context
-    }
-}
-
-// TODO: inheritence to HAResponseEvent?
+/// State changed event
 public struct HAResponseEventStateChanged: HADataDecodable {
+    /// The underlying event and the information it contains
+    ///
+    /// - TODO: should this be moved from composition to inheritence?
     public var event: HAResponseEvent
+    /// The entity ID which is changing
     public var entityId: String
-    public var oldState: HAResponseEntity?
-    public var newState: HAResponseEntity?
+    /// The old state of the entity, if there was one
+    public var oldState: HAEntity?
+    /// The new state of the entity, if there is one
+    public var newState: HAEntity?
 
     public init(data: HAData) throws {
         let event = try HAResponseEvent(data: data)
@@ -56,16 +31,16 @@ public struct HAResponseEventStateChanged: HADataDecodable {
         self.init(
             event: event,
             entityId: try eventData.decode("entity_id"),
-            oldState: try? eventData.decode("old_state", transform: HAResponseEntity.init(data:)),
-            newState: try? eventData.decode("new_state", transform: HAResponseEntity.init(data:))
+            oldState: try? eventData.decode("old_state", transform: HAEntity.init(data:)),
+            newState: try? eventData.decode("new_state", transform: HAEntity.init(data:))
         )
     }
 
     public init(
         event: HAResponseEvent,
         entityId: String,
-        oldState: HAResponseEntity?,
-        newState: HAResponseEntity?
+        oldState: HAEntity?,
+        newState: HAEntity?
     ) {
         self.event = event
         self.entityId = entityId

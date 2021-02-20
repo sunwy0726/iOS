@@ -1,17 +1,31 @@
 public extension HATypedRequest {
+    /// Retrieve the current user
+    ///
+    /// - Returns: A typed request that can be sent via `HAConnectionProtocol`
     static func currentUser() -> HATypedRequest<HAResponseCurrentUser> {
         .init(request: .init(type: .currentUser, data: [:]))
     }
 }
 
+/// The current user
 public struct HAResponseCurrentUser: HADataDecodable {
+    /// The ID of the user; this is a long hex string
     public var id: String
+    /// The name of the user, if one is set
     public var name: String?
+    /// Whether the user is an owner
     public var isOwner: Bool
+    /// Whether the user is an admin
+    ///
+    /// Admins have access to a different set of commands; you may need to handle failures for commands which
+    /// are not allowed to be executed by non-admins.
     public var isAdmin: Bool
+    /// Which credentials apply to this user
     public var credentials: [Credential]
+    /// Which MFA modules are available, which may include those not enabled
     public var mfaModules: [MFAModule]
 
+    /// A credential authentication provider
     public struct Credential {
         public var type: String
         public var id: String?
@@ -29,6 +43,7 @@ public struct HAResponseCurrentUser: HADataDecodable {
         }
     }
 
+    /// An MFA module
     public struct MFAModule {
         public var id: String
         public var name: String
