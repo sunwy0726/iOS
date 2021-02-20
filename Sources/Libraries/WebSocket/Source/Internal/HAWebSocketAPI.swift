@@ -184,7 +184,9 @@ internal class HAWebSocketAPI: HAWebSocketProtocol {
 extension HAWebSocketAPI {
     private func sendRaw(_ dictionary: [String: Any], completion: @escaping (Result<Void, HAWebSocketError>) -> Void) {
         guard let connection = connection else {
-            preconditionFailure("cannot send commands without a connection")
+            assertionFailure("cannot send commands without a connection")
+            completion(.failure(.internal(debugDescription: "tried to send when not connected")))
+            return
         }
 
         do {
