@@ -1,3 +1,5 @@
+import Foundation
+
 internal class HARequestInvocation: Equatable, Hashable {
     private let uniqueID = UUID()
     let request: HARequest

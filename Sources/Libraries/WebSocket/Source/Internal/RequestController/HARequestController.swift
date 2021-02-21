@@ -1,3 +1,5 @@
+import Foundation
+
 internal protocol HARequestControllerDelegate: AnyObject {
     func requestControllerShouldSendRequests(
         _ requestController: HARequestController

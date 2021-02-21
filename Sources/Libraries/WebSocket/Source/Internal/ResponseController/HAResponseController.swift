@@ -1,3 +1,4 @@
+import Foundation
 import Starscream
 
 internal protocol HAResponseControllerDelegate: AnyObject {

@@ -1,3 +1,5 @@
+import Foundation
+
 /// An entity in Home Assistant
 public struct HAEntity {
     /// The entity id, e.g. `sun.sun` or `light.office`

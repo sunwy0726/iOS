@@ -1,6 +1,7 @@
 // NOTE: see HAConnection.swift for how to access these types
 
 import Starscream
+import Foundation
 
 internal class HAConnectionImpl: HAConnectionProtocol {
     public weak var delegate: HAConnectionDelegate?

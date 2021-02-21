@@ -1,3 +1,5 @@
+import Foundation
+
 public extension HATypedSubscription {
     /// Subscribe to one or all events on the event bus
     ///

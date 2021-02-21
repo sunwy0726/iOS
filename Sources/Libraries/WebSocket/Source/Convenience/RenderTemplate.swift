@@ -1,3 +1,5 @@
+import Foundation
+
 public extension HATypedSubscription {
     /// Render a template and subscribe to live changes of the template
     ///

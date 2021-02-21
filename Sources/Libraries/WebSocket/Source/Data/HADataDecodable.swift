@@ -1,3 +1,5 @@
+import Foundation
+
 /// A type which can be decoded using our data type
 ///
 /// - Note: This differs from `Decodable` intentionally; `Decodable` does not support `Any` types or JSON well when the
