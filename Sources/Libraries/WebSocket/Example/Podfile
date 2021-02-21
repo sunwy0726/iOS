@@ -2,10 +2,6 @@ use_frameworks!
 
 platform :ios, '12.0'
 
-target 'HAWebSocket_Example' do
-  pod 'HAWebSocket', path: '../'
-
-  target 'HAWebSocket_Tests' do
-    inherit! :search_paths
-  end
+target 'Example' do
+  pod 'HAWebSocket', path: '../', testspecs: ['Tests']
 end

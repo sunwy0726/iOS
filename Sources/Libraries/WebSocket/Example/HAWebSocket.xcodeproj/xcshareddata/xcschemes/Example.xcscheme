@@ -15,8 +15,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "607FACCF1AFB9204008FA782"
-               BuildableName = "HAWebSocket_Example.app"
-               BlueprintName = "HAWebSocket_Example"
+               BuildableName = "Example.app"
+               BlueprintName = "Example"
                ReferencedContainer = "container:HAWebSocket.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -45,8 +45,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "607FACCF1AFB9204008FA782"
-            BuildableName = "HAWebSocket_Example.app"
-            BlueprintName = "HAWebSocket_Example"
+            BuildableName = "Example.app"
+            BlueprintName = "Example"
             ReferencedContainer = "container:HAWebSocket.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
@@ -55,10 +55,10 @@
             skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "607FACE41AFB9204008FA782"
-               BuildableName = "HAWebSocket_Tests.xctest"
-               BlueprintName = "HAWebSocket_Tests"
-               ReferencedContainer = "container:HAWebSocket.xcodeproj">
+               BlueprintIdentifier = "EAA5CCA2EC2B3B4832B737A2BBA555E1"
+               BuildableName = "HAWebSocket-Unit-Tests.xctest"
+               BlueprintName = "HAWebSocket-Unit-Tests"
+               ReferencedContainer = "container:Pods/Pods.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -78,8 +78,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "607FACCF1AFB9204008FA782"
-            BuildableName = "HAWebSocket_Example.app"
-            BlueprintName = "HAWebSocket_Example"
+            BuildableName = "Example.app"
+            BlueprintName = "Example"
             ReferencedContainer = "container:HAWebSocket.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -95,8 +95,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "607FACCF1AFB9204008FA782"
-            BuildableName = "HAWebSocket_Example.app"
-            BlueprintName = "HAWebSocket_Example"
+            BuildableName = "Example.app"
+            BlueprintName = "Example"
             ReferencedContainer = "container:HAWebSocket.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
